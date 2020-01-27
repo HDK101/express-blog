@@ -1,0 +1,32 @@
+{
+  "name": "express-blog",
+  "version": "0.0.1",
+  "description": "Blog system",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "dev": "nodemon ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HDK101/express-blog.git"
+  },
+  "keywords": [
+    "Blog"
+  ],
+  "author": "EMKBRO",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/HDK101/express-blog/issues"
+  },
+  "homepage": "https://github.com/HDK101/express-blog#readme",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "mongoose": "^5.8.9",
+    "pm2": "^4.2.3"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.2"
+  }
+}
