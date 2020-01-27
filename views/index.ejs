@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+      <meta charset="utf-8">
+      <meta name="description" content="Blog system test">
+      <meta name="viewport" content="width=device-width;,user-scalable=no">
+  </head>
+  <body>
+      <% const currentPage = page %>
+      <% if(currentPage == "postCreate") {%>
+        <%- include("posts/create") %>
+      <%}%>
+  </body>
+</html>
