@@ -1,17 +1,33 @@
 function getController(app, models) {
-    const { Increment, Admin, Comment, Post, User } = models;
-    app.get("/", function(req, res) {
+  const { Increment, Admin, Comment, Post, User } = models;
+  app.get("/", function(req, res) {
     res.send("Hello there!");
   });
 
   /*BLOG POST*/
   app.get("/post/create", function(req, res) {
-    res.render("index", { page: "postCreate" });
+    res.render("index", {
+      page: "postCreate",
+      title: "",
+      content: ""
+    });
     // res.send("Post create");
   });
   app.get("/post/:id", function(req, res) {
+    Post.findOne({ id: req.params.id }, function(err, post) {
+      if (err) return console.log(err);
 
-    res.render("index", { page: "postShow", title:"A", content: "A" });
+      if (post) {
+        res.render("index", {
+          page: "postShow",
+          title: post.title,
+          content: post.content
+        });
+      }
+      else {
+        res.send("Post not found!");
+      }
+    });
   });
   app.get("/post/:id/update", function(req, res) {
     res.send("Post update");
