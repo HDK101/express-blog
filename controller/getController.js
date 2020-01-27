@@ -1,14 +1,16 @@
-function getController(app) {
-  app.get("/", function(req, res) {
+function getController(app, models) {
+    const { Increment, Admin, Comment, Post, User } = models;
+    app.get("/", function(req, res) {
     res.send("Hello there!");
   });
 
-  /*POST*/
-  app.get("/post/:id", function(req, res) {
-    res.send(req.params.id);
-  });
+  /*BLOG POST*/
   app.get("/post/create", function(req, res) {
-     res.send("Post create");
+    res.render("index", { page: "postCreate" });
+    // res.send("Post create");
+  });
+  app.get("/post/:id", function(req, res) {
+    
   });
   app.get("/post/:id/update", function(req, res) {
     res.send("Post update");
