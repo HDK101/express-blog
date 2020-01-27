@@ -7,8 +7,12 @@
   </head>
   <body>
       <% const currentPage = page %>
+      <% const currentTitle = title ? title : ""%>
+      <% const currentContent = content ? content : ""%>
       <% if(currentPage == "postCreate") {%>
         <%- include("posts/create") %>
-      <%}%>
+      <%} else if(currentPage == "postShow"){%>
+        <%- include("posts/read",{ title: currentTitle, content: currentContent })%>
+      <% }%>
   </body>
 </html>

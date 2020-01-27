@@ -10,7 +10,8 @@ function getController(app, models) {
     // res.send("Post create");
   });
   app.get("/post/:id", function(req, res) {
-    
+
+    res.render("index", { page: "postShow", title:"A", content: "A" });
   });
   app.get("/post/:id/update", function(req, res) {
     res.send("Post update");
