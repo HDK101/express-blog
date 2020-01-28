@@ -7,12 +7,17 @@
   </head>
   <body>
       <% const currentPage = page %>
-      <% const currentTitle = title ? title : ""%>
-      <% const currentContent = content ? content : ""%>
+      <% const currentTitle = typeof title !== "undefined" ? title : ""%>
+      <% const currentContent = typeof content !== "undefined" ? content : ""%>
+      <% const currentId = typeof id !== "undefined" ? id : ""%>
       <% if(currentPage == "postCreate") {%>
         <%- include("posts/create") %>
       <%} else if(currentPage == "postShow"){%>
-        <%- include("posts/read",{ title: currentTitle, content: currentContent })%>
-      <% }%>
+        <%- include("posts/read",{ title: currentTitle, content: currentContent, id: currentId })%>
+      <% } else if(currentPage == "postDelete") { %>
+        <%- include("posts/delete",{ id: currentId })%>
+      <%} else if(currentPage == "postUpdate") {%>
+        <%- include("posts/update",{ title: currentTitle, content: currentContent, id: currentId })%>
+      <%}%>
   </body>
 </html>

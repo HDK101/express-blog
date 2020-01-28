@@ -17,5 +17,5 @@ getController(app, Models);
 postController(app, Models);
 
 app.use("*", function(req, res) {
-  res.send("404", 404);
+  res.status(404).send("404");
 });

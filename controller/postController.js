@@ -1,6 +1,5 @@
 function postController(app, models) {
   const { Increment, Admin, Comment, Post, User } = models;
-  console.log(Increment);
 
   /*BLOG POST*/
   app.post("/post/create", function(req, res) {
@@ -27,9 +26,26 @@ function postController(app, models) {
 
       postNew.save(function(err) {
         if (err) console.log(err);
-        res.send("Post created!");
+        res.status(304).redirect("/post/" + inc.post);
       });
     });
+  });
+
+  app.post("/post/update", function(req, res) {
+    const { title, content, id } = req.body;
+
+    Post.findOneAndUpdate(
+      { id: id },
+      { $set: { title: title, content: content } },
+      {
+        new: true
+      },
+      function(err) {
+        if(err) return console.log(err);
+
+        res.status(304).redirect("/post/" + id);
+      }
+    );
   });
 }
 
