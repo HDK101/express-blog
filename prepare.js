@@ -1,89 +1,93 @@
-const mongoose = require("mongoose");
-const { Increment } = require("./models/increment");
 const { Admin } = require("./models/admin");
+const { Increment } = require("./models/increment");
+const mongoose = require("mongoose");
 
-console.log("This command should be executed this way: ");
-console.log("npm run prepare <user> <password> <key>");
+if(!process.argv[2] || !process.argv[3]) throw "Empty name or email!";
 
-const promise = new Promise(function(resolve, reject) {
-  mongoose.set("useNewUrlParser", true);
-  mongoose.set("useFindAndModify", false);
-  mongoose.set("useCreateIndex", true);
-  mongoose.set("useUnifiedTopology", true);
+mainAdminDb = new Admin({
+  name: process.argv[2],
+  password: process.argv[3],
+  email: "",
+  main: true,
+  id: 0
+});
+incrementDb = new Increment();
 
-  mongoose.connect("mongodb://localhost/blogsys");
-  const db = mongoose.connection;
-  db.on("error", function() {
-    reject("Connection failure!");
-  });
-  db.on("open", function() {
-    resolve();
-  });
-})
-  .then(function() {
-    let incCount = 0;
-    Increment.countDocuments({ id: "increment" }, function(err, count) {
-      if (err) throw err;
-      incCount = count;
+function InitializeMongoose() {
+  promise = new Promise(function(resolve, reject) {
+    mongoose.set("useNewUrlParser", true);
+    mongoose.set("useFindAndModify", false);
+    mongoose.set("useCreateIndex", true);
+    mongoose.set("useUnifiedTopology", true);
+
+    mongoose.connect("mongodb://localhost/blogsys");
+    const db = mongoose.connection;
+    db.on("error", function() {
+      reject("Connection failure!");
     });
-    return incCount;
-  })
-  .then(function(count) {
-    incrementDb = new Increment({
-      post: 0,
-      admin: 0,
-      user: 0,
-      comment: 0,
-      id: "increment"
+    db.on("open", function() {
+      resolve();
     });
-    if (count == 0) {
-      incrementDb.save(function(err) {
-        if (err) throw err;
-        console.log("Increment saved!");
-      });
-    }
-  })
-  .then(function() {
-    let adminCount = 0;
+  });
+  return promise;
+}
+function CheckAdminExistence() {
+  promise = new Promise(function(resolve, reject) {
     Admin.countDocuments({ id: 0, main: true }, function(err, count) {
-      if (err) throw err;
-      adminCount = count;
+      if (err) reject(err);
+      resolve(count);
     });
-    return adminCount;
-  })
-  .then(function(count) {
-    if (!process.argv[2] || !process.argv[3]) throw "Empty name or email!";
+  });
+  return promise;
+}
 
-    mainAdminDb = new Admin({
-      name: process.argv[2],
-      password: process.argv[3],
-      email: "",
-      main: true,
-      id: count
-    });
-
+function CreateAdmin(count) {
+  promise = new Promise(function(resolve, reject) {
     if (count == 0) {
+      console.log("No main admin was found, creating...");
       mainAdminDb.save(function(err) {
-        if (err) throw err;
+        if (err) reject(err);
         console.log("Main admin created!");
+        resolve();
       });
     }
-    return
-  })
-  .catch(function(error) {
-    console.log("Error! " + error);
+  });
+  return promise;
+}
+
+function CheckIncrementExistence() {
+  promise = new Promise(function(resolve, reject) {
+    Increment.countDocuments({ }, function(err, count) {
+      if (err) reject(err);
+      resolve(count);
+    });
+  });
+  return promise; 
+}
+
+function CreateIncrement(count) {
+  promise = new Promise(function(resolve, reject) {
+    if (count == 0) {
+      console.log("No increment was found, creating...");
+      incrementDb.save(function(err) {
+        if (err) reject(err);
+        console.log("Increment created!");
+        resolve();
+      });
+    }
+  });
+  return promise;
+}
+
+InitializeMongoose()
+  .then(CheckAdminExistence)
+  .then(CreateAdmin)
+  .then(CheckIncrementExistence)
+  .then(CreateIncrement)
+  .finally(function() {
+    console.log("Everything done!");
     process.exit();
   })
-  .finally(function() {
-    setTimeout(function() {
-      console.log("Timeout!");
-      process.exit();
-    }, 6000);
+  .catch(function(error) {
+    console.log("Error:" + error);
   });
-
-// mainAdminDb = new Admin({
-//   name: String,
-//   password: String,
-//   email: String,
-//   id: Number
-// });
