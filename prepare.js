@@ -13,7 +13,7 @@ mainAdminDb = new Admin({
 });
 incrementDb = new Increment();
 
-function InitializeMongoose() {
+function initializeMongoose() {
   promise = new Promise(function(resolve, reject) {
     mongoose.set("useNewUrlParser", true);
     mongoose.set("useFindAndModify", false);
@@ -31,7 +31,7 @@ function InitializeMongoose() {
   });
   return promise;
 }
-function CheckAdminExistence() {
+function checkAdminExistence() {
   promise = new Promise(function(resolve, reject) {
     Admin.countDocuments({ id: 0, main: true }, function(err, count) {
       if (err) reject(err);
@@ -41,7 +41,7 @@ function CheckAdminExistence() {
   return promise;
 }
 
-function CreateAdmin(count) {
+function createAdmin(count) {
   promise = new Promise(function(resolve, reject) {
     if (count == 0) {
       console.log("No main admin was found, creating...");
@@ -55,7 +55,7 @@ function CreateAdmin(count) {
   return promise;
 }
 
-function CheckIncrementExistence() {
+function checkIncrementExistence() {
   promise = new Promise(function(resolve, reject) {
     Increment.countDocuments({ }, function(err, count) {
       if (err) reject(err);
@@ -65,7 +65,7 @@ function CheckIncrementExistence() {
   return promise; 
 }
 
-function CreateIncrement(count) {
+function createIncrement(count) {
   promise = new Promise(function(resolve, reject) {
     if (count == 0) {
       console.log("No increment was found, creating...");
@@ -79,11 +79,11 @@ function CreateIncrement(count) {
   return promise;
 }
 
-InitializeMongoose()
-  .then(CheckAdminExistence)
-  .then(CreateAdmin)
-  .then(CheckIncrementExistence)
-  .then(CreateIncrement)
+initializeMongoose()
+  .then(checkAdminExistence)
+  .then(createAdmin)
+  .then(checkIncrementExistence)
+  .then(createIncrement)
   .finally(function() {
     console.log("Everything done!");
     process.exit();
