@@ -1,20 +1,13 @@
 const { app, mongoose } = require("./Config/config");
 
 /*Models*/
-const { Increment } = require("./models/increment");
-const { Admin } = require("./models/admin");
-const { Comment } = require("./models/comment");
-const { Post } = require("./models/post");
-const { User } = require("./models/user");
-
-const Models = { Increment, Admin, Comment, Post, User };
+const models = require("./models/models");
 
 /*Controllers*/
-const { getController } = require("./controller/getController");
-const { postController } = require("./controller/postController");
+const { getController, postController } = require("./controller/controllers");
 
-getController(app, Models);
-postController(app, Models);
+getController(app, models);
+postController(app, models);
 
 app.use("*", function(req, res) {
   res.status(404).send("404");
