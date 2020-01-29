@@ -6,6 +6,7 @@ const admin = new Schema({
   password: String,
   email: String,
   id: Number,
+  token : String,
   /*A boolean to check if this admin is the main one*/
   main: { type: Boolean, default: false }
 });
