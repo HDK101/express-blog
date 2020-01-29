@@ -1,11 +1,12 @@
-const { app, mongoose } = require("./Config/server");
+const { app, mongoose, config } = require("./Server/server");
 
 /*Models*/
 const models = require("./models/models");
 
 /*Controllers*/
-const { getController, postController } = require("./controller/controllers");
+const { setSettings, getController, postController } = require("./controller/controllers");
 
+setSettings({});
 getController(app, models);
 postController(app, models);
 
