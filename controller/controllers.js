@@ -227,7 +227,14 @@ function postController(app, models) {
       });
   });
 }
-
+/**
+ * Function that tries to log the user by the token, usually,
+ * stored in the cookies(req.cookies or req.signedCookies), returns
+ * a boolean in the callback function
+ * 
+ * @param { String } token 
+ * @param { void } callback 
+ */
 function adminLoginByToken(token, callback) {
   let logged = false;
 
