@@ -1,5 +1,7 @@
 const crypto = require("crypto");
 
+const iv = "asd2344rtdfrtrw4";
+
 function encrypt(text, key) {
   let cipher = crypto.createCipheriv("aes-256-cbc", key, iv);
   let encrypted = cipher.update(text, "utf8", "base64");
