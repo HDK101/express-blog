@@ -264,4 +264,4 @@ function adminLoginByToken(token, callback) {
     });
 }
 
-module.exports = { setKey, getController, postController };
+module.exports = { setKey, getController, postController, adminLoginByToken };
