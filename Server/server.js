@@ -9,7 +9,7 @@ const config = getConfig();
 
 const app = express();
 
-const port = process.env.port ? process.env.port : getConfig.port;
+const port = process.env.port ? process.env.port : config.port;
 
 mongoose.set("useNewUrlParser", true);
 mongoose.set("useFindAndModify", false);
@@ -25,7 +25,7 @@ db.on("open", function() {
 
 app.set("view engine", "ejs");
 
-app.use(cookieparser(getConfig.secretKey));
+app.use(cookieparser(config.secretKey));
 app.use(bodyparser.urlencoded({ extended: true }));
 app.use(bodyparser.json());
 
@@ -34,4 +34,4 @@ app.listen(port, function(err) {
   console.log("Server initialized in port " + port);
 });
 
-module.exports = { app, ejs, mongoose, getConfig };
+module.exports = { app, ejs, mongoose, config };
