@@ -1,13 +1,15 @@
-const { config } = require("./configParser");
+const { getConfig } = require("./configParser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
 const express = require("express");
 const bodyparser = require("body-parser");
 const cookieparser = require("cookie-parser");
 
+const config = getConfig();
+
 const app = express();
 
-const port = process.env.port ? process.env.port : config.port;
+const port = process.env.port ? process.env.port : getConfig.port;
 
 mongoose.set("useNewUrlParser", true);
 mongoose.set("useFindAndModify", false);
@@ -23,7 +25,7 @@ db.on("open", function() {
 
 app.set("view engine", "ejs");
 
-app.use(cookieparser(config.secretKey));
+app.use(cookieparser(getConfig.secretKey));
 app.use(bodyparser.urlencoded({ extended: true }));
 app.use(bodyparser.json());
 
@@ -32,4 +34,4 @@ app.listen(port, function(err) {
   console.log("Server initialized in port " + port);
 });
 
-module.exports = { app, ejs, mongoose, config };
+module.exports = { app, ejs, mongoose, getConfig };

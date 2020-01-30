@@ -1,8 +1,9 @@
-const { Admin } = require("./models/admin");
-const { Increment } = require("./models/increment");
+const { Admin, Increment } = require("./models/models");
+const { setConfig } = require("./Server/configParser");
+const { encrypt } = require("./components/crypto");
 const mongoose = require("mongoose");
 
-if(!process.argv[2] || !process.argv[3]) throw "Empty name or email!";
+if (!process.argv[2] || !process.argv[3]) throw "Empty name or email!";
 
 mainAdminDb = new Admin({
   name: process.argv[2],
@@ -12,6 +13,23 @@ mainAdminDb = new Admin({
   id: 0
 });
 incrementDb = new Increment();
+
+function setConfigJSON() {
+  promise = new Promise(function(resolve, reject) {
+    function generateKey() {
+      let key = "";
+      while (key.length < 32) {
+        key += Math.round(Math.random() * 10);
+      }
+      return key;
+    }
+    const generatedKey = generateKey();
+    config = { port: 3000, secretKey: generatedKey, initialized: true };
+    setConfig(config);
+    resolve();
+  });
+  return promise;
+}
 
 function initializeMongoose() {
   promise = new Promise(function(resolve, reject) {
@@ -50,6 +68,9 @@ function createAdmin(count) {
         console.log("Main admin created!");
         resolve();
       });
+    } else {
+      console.log("Main admin already exists");
+      resolve();
     }
   });
   return promise;
@@ -57,12 +78,12 @@ function createAdmin(count) {
 
 function checkIncrementExistence() {
   promise = new Promise(function(resolve, reject) {
-    Increment.countDocuments({ }, function(err, count) {
+    Increment.countDocuments({}, function(err, count) {
       if (err) reject(err);
       resolve(count);
     });
   });
-  return promise; 
+  return promise;
 }
 
 function createIncrement(count) {
@@ -74,12 +95,16 @@ function createIncrement(count) {
         console.log("Increment created!");
         resolve();
       });
+    } else {
+      console.log("Increment already exists");
+      resolve();
     }
   });
   return promise;
 }
 
 initializeMongoose()
+  .then(setConfigJSON)
   .then(checkAdminExistence)
   .then(createAdmin)
   .then(checkIncrementExistence)
