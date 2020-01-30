@@ -18,6 +18,8 @@
         <%- include("posts/delete",{ id: currentId })%>
       <%} else if(currentPage == "postUpdate") {%>
         <%- include("posts/update",{ title: currentTitle, content: currentContent, id: currentId })%>
+      <%} else if(currentPage == "adminLogin") {%>
+        <%- include("admin/login")%>
       <%}%>
   </body>
 </html>
