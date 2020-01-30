@@ -4,9 +4,9 @@ const { app, mongoose, config } = require("./Server/server");
 const models = require("./models/models");
 
 /*Controllers*/
-const { setSettings, getController, postController } = require("./controller/controllers");
+const { setKey, getController, postController } = require("./controller/controllers");
 
-setSettings({});
+setKey(config.secretKey);
 getController(app, models);
 postController(app, models);
 
