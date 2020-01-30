@@ -3,12 +3,12 @@ const { setConfig } = require("./Server/configParser");
 const { encrypt } = require("./components/crypto");
 const mongoose = require("mongoose");
 
-if (!process.argv[2] || !process.argv[3]) throw "Empty name or email!";
+if (!process.argv[2] || !process.argv[3] || !process.argv[4]) throw "Empty name, email or password!";
 
 mainAdminDb = new Admin({
-  name: process.argv[2],
-  password: process.argv[3],
-  email: "",
+  email: process.argv[2],
+  name: process.argv[3],
+  password: process.argv[4],
   main: true,
   id: 0
 });
