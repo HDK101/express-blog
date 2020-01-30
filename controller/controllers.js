@@ -1,19 +1,42 @@
-settings = {
-  secretKey: "DEFAULT"
+var { encrypt, decrypt } = require("../components/crypto");
+const { Increment, Admin, Comment, Post, User } = require("../models/models");
+
+settings = {};
+
+const getSecretKey = () => {
+  if (!settings.secretKey) throw "Special key not set!";
+  return settings.secretKey;
 };
 
 /*
 Controller settings
 */
-function setSettings(object) {
-  settings = Object.assign(settings, object);
+
+/**
+ *
+ * @param { string } key - Key for encrypting
+ */
+function setKey(key) {
+  settings.secretKey = key;
+}
+
+/**
+ *
+ * @param { Object } config - Configuration object
+ * Set settings for controller
+ *
+ * Settings:
+ * - secretKey : String
+ *
+ */
+function setSettings(config) {
+  settings = Object.assign(settings, config);
 }
 
 /*
 GET
 */
 function getController(app, models) {
-  const { Increment, Admin, Comment, Post, User } = models;
   app.get("/", function(req, res) {
     res.send("Hello there!");
   });
@@ -83,17 +106,12 @@ function getController(app, models) {
   ****/
 
   app.get("/admin/create", function(req, res) {
-    if (settings.secretKey == "DEFAULT") {
-      console.log(
-        "***WARNING***"
-      );
-      console.log(
-        "Warning! Not setting a secret key can be dangerous to the safety of the server!"
-      );
-    }
-    res.cookie("test", "test", { signed: true });
-    console.log(req.signedCookies.test);
     res.end();
+  });
+  app.get("/admin/login", function(req, res) {
+    res.render("index", {
+      page: "adminLogin"
+    });
   });
 }
 
@@ -101,11 +119,15 @@ function getController(app, models) {
 POST
 */
 function postController(app, models) {
-  const { Increment, Admin, Comment, Post, User } = models;
-
-  /*BLOG POST*/
+  /********
+  BLOG POST
+  ********/
   app.post("/post/create", function(req, res) {
     const { title, content } = req.body;
+
+    adminLoginByToken(req.signedCookies.token, function(logged) {
+      console.log("Logged?" + logged);
+    });
 
     /*Post ID increment*/
     const incrementPromise = new Promise(function(resolve, reject) {
@@ -149,6 +171,90 @@ function postController(app, models) {
       }
     );
   });
+
+  /****
+  ADMIN
+  ****/
+
+  app.post("/admin/login", function(req, res) {
+    const { email, password } = req.body;
+
+    const token = encrypt(`${Math.random() * 1000}${email}`, getSecretKey());
+
+    /*Find Admin and, if credentials is valid, set a token in DB*/
+    function findAndUpdateAdmin() {
+      promise = new Promise(function(resolve, reject) {
+        Admin.findOneAndUpdate(
+          { email: email, password: password },
+          { $set: { token: token } },
+          function(err, doc) {
+            if (err) reject(err);
+
+            /*Check document existence*/
+            if (doc) resolve(true);
+            else resolve(false);
+          }
+        );
+      });
+      return promise;
+    }
+
+    /*Set cookie "token" in browser*/
+    function setBrowserToken(adminFound) {
+      promise = new Promise(function(resolve, reject) {
+        if (adminFound) {
+          res.cookie("token", token, { signed: true });
+          resolve(true);
+        } else resolve(false);
+      });
+      return promise;
+    }
+
+    /*Redirect to home page or send error*/
+    function redirectOrError(cookieDone) {
+      promise = new Promise(function(resolve, reject) {
+        if (cookieDone) res.status(304).redirect("/");
+        else res.send("Invalid credentials!");
+        resolve();
+      });
+    }
+
+    findAndUpdateAdmin()
+      .then(setBrowserToken)
+      .then(redirectOrError)
+      .catch(function(reason) {
+        console.log("Error! " + reason);
+      });
+  });
 }
 
-module.exports = { setSettings, getController, postController };
+function adminLoginByToken(token, callback) {
+  let logged = false;
+
+  function findAdmin() {
+    promise = new Promise(function(resolve, reject) {
+      Admin.findOne({ token: token }, function(err, doc) {
+        if (err) reject(err);
+        if (doc) resolve(true);
+      });
+    });
+    return promise;
+  }
+
+  function setLogged(exists) {
+    promise = new Promise(function(resolve, reject) {
+      if (exists) resolve(true);
+      else reject("Admin not found!");
+    });
+    return promise;
+  }
+
+  findAdmin()
+    .then(setLogged)
+    .then(callback)
+    .catch(function(error) {
+      console.log("Error! " + error);
+    });
+}
+
+module.exports = { setKey, getController, postController };
