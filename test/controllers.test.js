@@ -2,10 +2,13 @@ const { adminLoginByToken } = require("../controller/controllers");
 const { Admin } = require("../models/models");
 const { connect } = require("../Server/server");
 const assert = require("assert");
+const { getConfig } = require("../Server/configParser");
+
+const config = getConfig();
 
 describe("Methods for Controllers file", () => {
   it("login admin by token(should return true)", () => {
-    connect({ test: true });
+    connect(config.name, true);
 
     const token = "123testtoken123";
     testAdmin = new Admin({
