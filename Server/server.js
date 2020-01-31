@@ -16,16 +16,15 @@ mongoose.set("useCreateIndex", true);
 mongoose.set("useUnifiedTopology", true);
 
 /**
- * Connect to MongoDB
- * @param { Object } options - { test: false } by default
+ * Connect to blog database(MongoDB)
+ * @param { String } name - Blog name
+ * @param { Boolean } test - false by default
  */
-function connect(options) {
-  if (typeof options === "undefined") {
-    mongoose.connect("mongodb://localhost/blogsys");
-  } else {
-    if (options.test == true) {
-      mongoose.connect("mongodb://localhost/blog_test");
-    }
+function connect(name, test) {
+  if (typeof test === "undefined") {
+    mongoose.connect(`mongodb://localhost/${name}_blog`);
+  } else if (test) {
+    mongoose.connect(`mongodb://localhost/${name}_blog_test`);
   }
   const db = mongoose.connection;
   db.on("error", console.error.bind("Connection failure"));
@@ -45,4 +44,4 @@ app.listen(port, function(err) {
   console.log("Server initialized in port " + port);
 });
 
-module.exports = { connect, clearTestDatabase, app, mongoose, config };
+module.exports = { connect, app, mongoose, config };
