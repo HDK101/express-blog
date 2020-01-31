@@ -1,6 +1,5 @@
 const { Admin, Increment } = require("./models/models");
 const { setConfig } = require("./Server/configParser");
-const { encrypt } = require("./components/crypto");
 const mongoose = require("mongoose");
 
 if (!process.argv[2] || !process.argv[3] || !process.argv[4]) throw "Empty name, email or password!";
