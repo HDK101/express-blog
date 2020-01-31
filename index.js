@@ -1,4 +1,6 @@
-const { app, mongoose, config } = require("./Server/server");
+const { connect, app, mongoose, config } = require("./Server/server");
+
+connect();
 
 /*Models*/
 const models = require("./models/models");

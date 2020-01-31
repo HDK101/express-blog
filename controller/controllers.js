@@ -231,18 +231,17 @@ function postController(app, models) {
  * Function that tries to log the user by the token, usually,
  * stored in the cookies(req.cookies or req.signedCookies), returns
  * a boolean in the callback function
- * 
- * @param { String } token 
- * @param { void } callback 
+ *
+ * @param { String } token
+ * @param { void } callback
  */
 function adminLoginByToken(token, callback) {
-  let logged = false;
 
   function findAdmin() {
     promise = new Promise(function(resolve, reject) {
       Admin.findOne({ token: token }, function(err, doc) {
         if (err) reject(err);
-        if (doc) resolve(true);
+        resolve(doc != null);
       });
     });
     return promise;

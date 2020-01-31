@@ -22,11 +22,13 @@ mongoose.set("useUnifiedTopology", true);
  * @param { Object } options - { test: false } by default
  */
 function connect(options) {
-
-  if (typeof options != undefined) {
+  if (typeof options === "undefined") {
     mongoose.connect("mongodb://localhost/blogsys");
   } else {
-    if (options.test == true) mongoose.connect("mongodb://localhost/blogtest");
+    if (options.test == true) {
+      test = true;
+      mongoose.connect("mongodb://localhost/blog_test");
+    }
   }
   const db = mongoose.connection;
   db.on("error", console.error.bind("Connection failure"));
@@ -37,7 +39,7 @@ function connect(options) {
 
 function clearTestDatabase() {
   const db = mongoose.connection;
-  if(test) db.dropDatabase();
+  if (test) db.dropDatabase();
   else console.log("Can't clear database in production mode.");
 }
 
@@ -52,4 +54,4 @@ app.listen(port, function(err) {
   console.log("Server initialized in port " + port);
 });
 
-module.exports = { connect, app, mongoose, config };
+module.exports = { connect, clearTestDatabase, app, mongoose, config };

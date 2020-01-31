@@ -1,13 +1,58 @@
 const { adminLoginByToken } = require("../controller/controllers");
+const { Admin } = require("../models/models");
+const { connect, clearTestDatabase } = require("../Server/server");
 const assert = require("assert");
 
-beforeEach(function() {
-    return console.log("Hey medic, i am big chungus");
-});
-
-describe("Tests", function() {
-    it('should test', () => {
-        assert.equal(1, 1);
+describe("Methods for Controllers file", () => {
+  it("value should be 0", function() {
+    return Promise.resolve(1).then(function(value) {
+      assert(value === 1);
     });
-});
+  });
+  it("login admin by token(should return true)", () => {
+    connect({ test: true });
 
+    const token = "123testtoken123";
+    testAdmin = new Admin({
+      email: "test@email.com",
+      name: "Name",
+      password: "Password",
+      token: token,
+      main: true,
+      id: 0
+    });
+
+    function saveAdmin() {
+      promise = new Promise(function(resolve) {
+        testAdmin.save();
+        resolve();
+      });
+      return promise;
+    }
+    function loginByToken() {
+      promise = new Promise(function(resolve) {
+        adminLoginByToken(token, function(logged) {
+          resolve(logged);
+        });
+      });
+      return promise;
+    }
+
+    return Promise.resolve()
+      .then(saveAdmin)
+      .then(loginByToken)
+      .then(function(logged) {
+        promise = new Promise(function(resolve) {
+          console.log("Logged? " + logged);
+          assert(logged == true);
+          resolve();
+        });
+      })
+      .catch(function(error) {
+        assert.fail("This should not be happening!");
+      });
+  });
+  after(function() {
+    // clearTestDatabase();
+  });
+});
