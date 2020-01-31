@@ -1,14 +1,9 @@
 const { adminLoginByToken } = require("../controller/controllers");
 const { Admin } = require("../models/models");
-const { connect, clearTestDatabase } = require("../Server/server");
+const { connect } = require("../Server/server");
 const assert = require("assert");
 
 describe("Methods for Controllers file", () => {
-  it("value should be 0", function() {
-    return Promise.resolve(1).then(function(value) {
-      assert(value === 1);
-    });
-  });
   it("login admin by token(should return true)", () => {
     connect({ test: true });
 
@@ -53,6 +48,6 @@ describe("Methods for Controllers file", () => {
       });
   });
   after(function() {
-    // clearTestDatabase();
+    Admin.collection.drop();
   });
 });
