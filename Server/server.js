@@ -4,8 +4,6 @@ const express = require("express");
 const bodyparser = require("body-parser");
 const cookieparser = require("cookie-parser");
 
-var test = false;
-
 const config = getConfig();
 
 const app = express();
@@ -26,7 +24,6 @@ function connect(options) {
     mongoose.connect("mongodb://localhost/blogsys");
   } else {
     if (options.test == true) {
-      test = true;
       mongoose.connect("mongodb://localhost/blog_test");
     }
   }
@@ -35,12 +32,6 @@ function connect(options) {
   db.on("open", function() {
     console.log("DB connected!");
   });
-}
-
-function clearTestDatabase() {
-  const db = mongoose.connection;
-  if (test) db.dropDatabase();
-  else console.log("Can't clear database in production mode.");
 }
 
 app.set("view engine", "ejs");
