@@ -1,9 +1,10 @@
 const { getConfig } = require("./configParser");
-const ejs = require("ejs");
 const mongoose = require("mongoose");
 const express = require("express");
 const bodyparser = require("body-parser");
 const cookieparser = require("cookie-parser");
+
+var test = false;
 
 const config = getConfig();
 
@@ -16,12 +17,29 @@ mongoose.set("useFindAndModify", false);
 mongoose.set("useCreateIndex", true);
 mongoose.set("useUnifiedTopology", true);
 
-mongoose.connect("mongodb://localhost/blogsys");
-const db = mongoose.connection;
-db.on("error", console.error.bind("Connection failure"));
-db.on("open", function() {
-  console.log("DB connected!");
-});
+/**
+ * Connect to MongoDB
+ * @param { Object } options - { test: false } by default
+ */
+function connect(options) {
+
+  if (typeof options != undefined) {
+    mongoose.connect("mongodb://localhost/blogsys");
+  } else {
+    if (options.test == true) mongoose.connect("mongodb://localhost/blogtest");
+  }
+  const db = mongoose.connection;
+  db.on("error", console.error.bind("Connection failure"));
+  db.on("open", function() {
+    console.log("DB connected!");
+  });
+}
+
+function clearTestDatabase() {
+  const db = mongoose.connection;
+  if(test) db.dropDatabase();
+  else console.log("Can't clear database in production mode.");
+}
 
 app.set("view engine", "ejs");
 
@@ -34,4 +52,4 @@ app.listen(port, function(err) {
   console.log("Server initialized in port " + port);
 });
 
-module.exports = { app, ejs, mongoose, config };
+module.exports = { connect, app, mongoose, config };
