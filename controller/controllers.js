@@ -125,34 +125,64 @@ function postController(app, models) {
   app.post("/post/create", function(req, res) {
     const { title, content } = req.body;
 
-    adminLoginByToken(req.signedCookies.token, function(logged) {
-      console.log("Logged?" + logged);
-    });
+    function loginByToken() {
+      promise = new Promise(function(resolve, reject) {
+        adminLoginByToken(req.signedCookies.token, function(err, logged) {
+          console.log(logged);
+          if (err) reject(err);
+          if (logged) resolve();
+          else reject("Permission denied.");
+        });
+      });
+      return promise;
+    }
 
     /*Post ID increment*/
-    const incrementPromise = new Promise(function(resolve, reject) {
-      incNew = Increment.findOneAndUpdate(
-        { id: "increment" },
-        { $inc: { post: 1 } },
-        {
-          new: true
-        }
-      );
-      resolve(incNew);
-    }).then(function(inc) {
-      /*Post create*/
-      postNew = new Post({
-        title: title,
-        content: content,
-        id: inc.post,
-        adminId: 0
+    function incrementPost() {
+      promise = new Promise(function(resolve, reject) {
+        Increment.findOneAndUpdate(
+          { id: "increment" },
+          { $inc: { post: 1 } },
+          {
+            new: true
+          },
+          function(err, doc) {
+            if (err) reject(err);
+            resolve(doc);
+          }
+        );
       });
+      return promise;
+    }
 
-      postNew.save(function(err) {
-        if (err) console.log(err);
-        res.status(304).redirect("/post/" + inc.post);
+    /*Post creation*/
+    function postCreate(inc) {
+      promise = new Promise(function(resolve, reject) {
+        postNew = new Post({
+          title: title,
+          content: content,
+          id: inc.post,
+          adminId: 0
+        });
+
+        postNew.save(function(err) {
+          if (err) reject(err);
+          resolve(inc.post);
+        });
       });
-    });
+      return promise;
+    }
+
+    loginByToken()
+      .then(incrementPost)
+      .then(postCreate)
+      .then(function(id) {
+        res.status(304).redirect("/post/" + id);
+      })
+      .catch(function(error) {
+        console.log("Error: " + error);
+        res.send("Permission denied.");
+      });
   });
 
   app.post("/post/update", function(req, res) {
@@ -236,6 +266,9 @@ function postController(app, models) {
  * @param { void } callback
  */
 function adminLoginByToken(token, callback) {
+  logged = false;
+
+  if (!token) return callback("Empty token", false);
 
   function findAdmin() {
     promise = new Promise(function(resolve, reject) {
@@ -249,17 +282,21 @@ function adminLoginByToken(token, callback) {
 
   function setLogged(exists) {
     promise = new Promise(function(resolve, reject) {
-      if (exists) resolve(true);
-      else reject("Admin not found!");
+      if (exists) {
+        logged = true;
+        resolve();
+      } else reject("Admin not found!");
     });
     return promise;
   }
 
   findAdmin()
     .then(setLogged)
-    .then(callback)
+    .finally(function() {
+      callback("", logged);
+    })
     .catch(function(error) {
-      console.log("Error! " + error);
+      callback(error, logged);
     });
 }
 
