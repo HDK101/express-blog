@@ -1,6 +1,6 @@
 const { adminLoginByToken } = require("../controller/controllers");
 const { Admin } = require("../models/models");
-const { connect } = require("../Server/server");
+const { closeConnection, connect } = require("../Server/server");
 const assert = require("assert");
 const { getConfig } = require("../Server/configParser");
 
@@ -69,5 +69,8 @@ describe("Methods for Controllers file", () => {
       .catch(function() {
         assert.fail("This should not be happening!");
       });
+  });
+  after(() => {
+    closeConnection();
   });
 });

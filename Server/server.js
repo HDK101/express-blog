@@ -39,6 +39,14 @@ function connect(name, test) {
   });
 }
 
+function closeConnection() {
+  const db = mongoose.connection;
+  db.close(function(err) {
+    if (err) throw err;
+    console.log("Connection to DB closed.");
+  });
+}
+
 function listen() {
   app.listen(port, function(err) {
     if (err) console.log(err);
@@ -46,4 +54,4 @@ function listen() {
   });
 }
 
-module.exports = { connect, listen, app, mongoose, config };
+module.exports = { connect, closeConnection, listen, app, mongoose, config };
