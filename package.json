@@ -6,7 +6,8 @@
   "scripts": {
     "test": "mocha",
     "dev": "nodemon .",
-    "create": "node createBlog.js"
+    "createBlog": "node createBlog.js",
+    "resetBlog": "node resetBlog.js"
   },
   "repository": {
     "type": "git",
