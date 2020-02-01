@@ -12,7 +12,6 @@ const reader = readline.createInterface({
 
 function askReset(value) {
   promise = new Promise(function(resolve, reject) {
-    console.log(value);
     reader.question(`Are you sure you want to clear "${blogName}"?\n`, function(
       answer
     ) {
