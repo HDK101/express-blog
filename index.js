@@ -1,6 +1,8 @@
-const { connect, app, config } = require("./Server/server");
+const { connect, listen, app, config } = require("./Server/server");
 
+listen();
 connect(config.blogName);
+
 
 /*Models*/
 const models = require("./models/models");

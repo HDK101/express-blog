@@ -15,6 +15,12 @@ mongoose.set("useFindAndModify", false);
 mongoose.set("useCreateIndex", true);
 mongoose.set("useUnifiedTopology", true);
 
+app.set("view engine", "ejs");
+
+app.use(cookieparser(config.secretKey));
+app.use(bodyparser.urlencoded({ extended: true }));
+app.use(bodyparser.json());
+
 /**
  * Connect to blog database(MongoDB)
  * @param { String } name - Blog name
@@ -40,10 +46,4 @@ function listen() {
   });
 }
 
-app.set("view engine", "ejs");
-
-app.use(cookieparser(config.secretKey));
-app.use(bodyparser.urlencoded({ extended: true }));
-app.use(bodyparser.json());
-
-module.exports = { connect, app, mongoose, config };
+module.exports = { connect, listen, app, mongoose, config };
