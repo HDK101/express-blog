@@ -1,6 +1,6 @@
 const { connect, app, config } = require("./Server/server");
 
-connect(config.name);
+connect(config.blogName);
 
 /*Models*/
 const models = require("./models/models");

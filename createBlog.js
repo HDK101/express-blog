@@ -90,7 +90,7 @@ function setConfigJSON() {
     }
     const generatedKey = generateKey();
     config = {
-      name: blogName,
+      blogName: blogName,
       port: blogPort,
       secretKey: generatedKey,
       initialized: true
@@ -113,7 +113,7 @@ function initializeMongoose() {
     mongoose.set("useCreateIndex", true);
     mongoose.set("useUnifiedTopology", true);
 
-    mongoose.connect("mongodb://localhost/blogsys");
+    mongoose.connect(`mongodb://localhost/${blogName}_blog`);
     const db = mongoose.connection;
     db.on("error", function() {
       reject("Connection failure!");

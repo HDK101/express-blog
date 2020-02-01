@@ -12,8 +12,8 @@ let config = {};
  * @param { Object } settings - An object with the following settings:
  * port,
  * secretKey
- * (NOTE 1: Should not be used in real-time!)
- * (NOTE 2: secretKey should be generated randomly)
+ * *  NOTE 1: Should not be used in real-time!
+ * *  NOTE 2: secretKey should be generated randomly
  */
 function setConfig(configToSet) {
   config = Object.assign(config, configToSet);
@@ -23,8 +23,18 @@ function setConfig(configToSet) {
 }
 
 /**
- * Returns configuration(Config.json)
- * Should be stored in a constant
+ * Reset configuration
+ * *  NOTE 1: Should not be used in real-time!
+ */
+function resetConfig() {
+  configJSON = JSON.stringify({ initialized: false });
+  fs.writeFileSync(__dirname + "/config.json", configJSON);
+  console.log("Configuration file reseted!");
+}
+
+/**
+ * Returns configuration(Config.json),
+ * should be stored in a constant
  */
 function getConfig() {
   config = JSON.parse(fs.readFileSync(__dirname + "/config.json"));
@@ -33,4 +43,4 @@ function getConfig() {
   return config;
 }
 
-module.exports = { setConfig, getConfig };
+module.exports = { setConfig, getConfig, resetConfig };
