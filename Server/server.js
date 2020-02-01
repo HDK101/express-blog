@@ -33,15 +33,17 @@ function connect(name, test) {
   });
 }
 
+function listen() {
+  app.listen(port, function(err) {
+    if (err) console.log(err);
+    console.log("Server initialized in port " + port);
+  });
+}
+
 app.set("view engine", "ejs");
 
 app.use(cookieparser(config.secretKey));
 app.use(bodyparser.urlencoded({ extended: true }));
 app.use(bodyparser.json());
-
-app.listen(port, function(err) {
-  if (err) console.log(err);
-  console.log("Server initialized in port " + port);
-});
 
 module.exports = { connect, app, mongoose, config };
