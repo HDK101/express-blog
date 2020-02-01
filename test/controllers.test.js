@@ -66,7 +66,7 @@ describe("Methods for Controllers file", () => {
         assert(logged == true);
         done();
       })
-      .catch(function(error) {
+      .catch(function() {
         assert.fail("This should not be happening!");
       });
   });
