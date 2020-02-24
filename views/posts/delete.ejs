@@ -1,4 +1,6 @@
-<form method="GET" action="/post/<%=id%>/delete/yes">
+<%- include("../main/htmlStart") %>
+<form method="GET" action="/posts/<%=id%>/delete/yes">
     <p>Delete post?</p>
     <input type="submit">
 </form>
+<%- include("../main/htmlEnd") %>

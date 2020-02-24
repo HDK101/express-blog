@@ -1,6 +1,8 @@
+<%- include("../main/htmlStart") %>
 <form method="POST" action="/post/update">
-    <input type="text" name="title" value="<%=title%>"/>
-    <input type="text" name="content" value="<%=content%>"/>
-    <input type="hidden" name="id" value="<%=id%>">
-    <input type="submit">
+  <input type="text" name="title" value="<%=title%>" />
+  <input type="text" name="content" value="<%=content%>" />
+  <input type="hidden" name="id" value="<%=id%>" />
+  <input type="submit" />
 </form>
+<%- include("../main/htmlEnd") %>

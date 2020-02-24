@@ -44,13 +44,37 @@ function getController(app, models) {
   /*********
   BLOG POST
   *********/
-  app.get("/post/create", function(req, res) {
-    res.render("index", {
-      page: "postCreate"
-    });
-    // res.send("Post create");
+  app.get("/posts", function(req, res) {
+    Post.find()
+      .limit(10)
+      .exec(function(err, docs) {
+        if (err) return console.log(err);
+
+        let posts = [];
+
+        index = 0;
+        docsLength = docs.length;
+
+        for (index = 0; index < docsLength; index++) {
+          let post = {
+            title: docs[index].title,
+            content: docs[index].content
+          };
+
+          posts.push(post);
+        }
+
+        if (posts.length == 0) {
+          res.send("No posts found.");
+        } else {
+          res.render("posts/feed", { posts: posts });
+        }
+      });
   });
-  app.get("/post/:id", function(req, res) {
+  app.get("/posts/create", function(req, res) {
+    res.render("posts/create");
+  });
+  app.get("/posts/:id", function(req, res) {
     res.header("Cache-Control", "no-cache");
     const id = req.params.id;
 
@@ -58,8 +82,7 @@ function getController(app, models) {
       if (err) return console.log(err);
 
       if (post) {
-        res.render("index", {
-          page: "postShow",
+        res.render("posts/read", {
           title: post.title,
           content: post.content,
           id: id
@@ -69,31 +92,29 @@ function getController(app, models) {
       }
     });
   });
-  app.get("/post/:id/update", function(req, res) {
+  app.get("/posts/:id/update", function(req, res) {
     const id = req.params.id;
     Post.findOne({ id: id }, function(err, post) {
       if (err) return console.log(err);
 
       if (post) {
-        res.render("index", {
-          page: "postUpdate",
+        res.render("posts/update", {
           title: post.title,
           content: post.content,
-          id: id
+          id: post.id
         });
       } else {
         res.send("Post not found!");
       }
     });
   });
-  app.get("/post/:id/delete", function(req, res) {
+  app.get("/posts/:id/delete", function(req, res) {
     const id = req.params.id;
-    res.render("index", {
-      page: "postDelete",
+    res.render("posts/delete", {
       id: id
     });
   });
-  app.get("/post/:id/delete/yes", function(req, res) {
+  app.get("/posts/:id/delete/yes", function(req, res) {
     const id = req.params.id;
     Post.deleteOne({ id: id }, function(err) {
       if (err) return console.log(err);
@@ -109,9 +130,7 @@ function getController(app, models) {
     res.end();
   });
   app.get("/admin/login", function(req, res) {
-    res.render("index", {
-      page: "adminLogin"
-    });
+    res.render("admin/login");
   });
 }
 
@@ -122,7 +141,7 @@ function postController(app, models) {
   /********
   BLOG POST
   ********/
-  app.post("/post/create", function(req, res) {
+  app.post("/posts/create", function(req, res) {
     const { title, content } = req.body;
 
     function loginByToken() {
@@ -177,7 +196,7 @@ function postController(app, models) {
       .then(incrementPost)
       .then(postCreate)
       .then(function(id) {
-        res.status(304).redirect("/post/" + id);
+        res.status(304).redirect("/posts/" + id);
       })
       .catch(function(error) {
         console.log("Error: " + error);
@@ -185,7 +204,7 @@ function postController(app, models) {
       });
   });
 
-  app.post("/post/update", function(req, res) {
+  app.post("/posts/update", function(req, res) {
     const { title, content, id } = req.body;
 
     Post.findOneAndUpdate(
@@ -197,7 +216,7 @@ function postController(app, models) {
       function(err) {
         if (err) return console.log(err);
 
-        res.status(304).redirect("/post/" + id);
+        res.status(304).redirect("/posts/" + id);
       }
     );
   });
@@ -247,6 +266,7 @@ function postController(app, models) {
         else res.send("Invalid credentials!");
         resolve();
       });
+      return promise;
     }
 
     findAndUpdateAdmin()

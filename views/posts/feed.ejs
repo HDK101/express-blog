@@ -1,0 +1,8 @@
+<%- include("../main/htmlStart") %>
+<% index = 0 %> 
+<% postsLength = posts.length %> 
+<% for(index = 0; index < postsLength; index++) { %>
+    <% post = posts[index] %>
+    <%- include("postNode", { title: post.title, content: post.content }) %>
+    <%}%>
+<%- include("../main/htmlEnd") %>
