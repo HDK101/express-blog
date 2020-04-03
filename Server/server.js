@@ -17,6 +17,8 @@ mongoose.set("useUnifiedTopology", true);
 
 app.set("view engine", "ejs");
 
+app.use(express.static("static"));
+
 app.use(cookieparser(config.secretKey));
 app.use(bodyparser.urlencoded({ extended: true }));
 app.use(bodyparser.json());

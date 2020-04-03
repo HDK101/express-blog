@@ -38,13 +38,17 @@ GET
 */
 function getController(app, models) {
   app.get("/", function(req, res) {
-    res.send("Hello there!");
+    postsPage(res);
   });
 
   /*********
   BLOG POST
   *********/
   app.get("/posts", function(req, res) {
+    postsPage(res);
+  });
+
+  function postsPage(res) {
     Post.find()
       .limit(10)
       .exec(function(err, docs) {
@@ -56,9 +60,11 @@ function getController(app, models) {
         docsLength = docs.length;
 
         for (index = 0; index < docsLength; index++) {
+          let reverseIndex = docsLength - index - 1;
+
           let post = {
-            title: docs[index].title,
-            content: docs[index].content
+            title: docs[reverseIndex].title,
+            content: docs[reverseIndex].content
           };
 
           posts.push(post);
@@ -70,7 +76,8 @@ function getController(app, models) {
           res.render("posts/feed", { posts: posts });
         }
       });
-  });
+  }
+
   app.get("/posts/create", function(req, res) {
     res.render("posts/create");
   });
@@ -146,10 +153,11 @@ function postController(app, models) {
 
     function loginByToken() {
       promise = new Promise(function(resolve, reject) {
-        adminLoginByToken(req.signedCookies.token, function(err, logged) {
-          console.log(logged);
+        adminLoginByToken(req.signedCookies.token, function(err, logged, id) {
+
           if (err) reject(err);
-          if (logged) resolve();
+          
+          if (logged) resolve(id);
           else reject("Permission denied.");
         });
       });
@@ -157,7 +165,7 @@ function postController(app, models) {
     }
 
     /*Post ID increment*/
-    function incrementPost() {
+    function incrementPost(adminId) {
       promise = new Promise(function(resolve, reject) {
         Increment.findOneAndUpdate(
           { id: "increment" },
@@ -166,8 +174,13 @@ function postController(app, models) {
             new: true
           },
           function(err, doc) {
+            let postIds = {};
+
             if (err) reject(err);
-            resolve(doc);
+
+            postIds = Object.assign(postIds, { post: doc.post, admin: adminId });
+
+            resolve(postIds);
           }
         );
       });
@@ -175,18 +188,20 @@ function postController(app, models) {
     }
 
     /*Post creation*/
-    function postCreate(inc) {
+    function postCreate(ids) {
       promise = new Promise(function(resolve, reject) {
+        const { post, admin } = ids;
+        
         postNew = new Post({
           title: title,
           content: content,
-          id: inc.post,
-          adminId: 0
+          id: post,
+          adminId: admin
         });
 
         postNew.save(function(err) {
           if (err) reject(err);
-          resolve(inc.post);
+          resolve(post);
         });
       });
       return promise;
@@ -287,13 +302,16 @@ function postController(app, models) {
  */
 function adminLoginByToken(token, callback) {
   logged = false;
+  id = -1;
 
   if (!token) return callback("Empty token", false);
 
-  function findAdmin() {
+  function findAdminAndSetId() {
     promise = new Promise(function(resolve, reject) {
       Admin.findOne({ token: token }, function(err, doc) {
         if (err) reject(err);
+
+        id = doc.id;
         resolve(doc != null);
       });
     });
@@ -310,13 +328,13 @@ function adminLoginByToken(token, callback) {
     return promise;
   }
 
-  findAdmin()
+  findAdminAndSetId()
     .then(setLogged)
     .finally(function() {
-      callback("", logged);
+      callback("", logged, id);
     })
     .catch(function(error) {
-      callback(error, logged);
+      callback(error, logged, -1);
     });
 }
 
