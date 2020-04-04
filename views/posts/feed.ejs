@@ -4,7 +4,7 @@
     <% postsLength = posts.length %> 
     <% for(index = 0; index < postsLength; index++) { %>
         <% post = posts[index] %>
-        <%- include("postNode", { title: post.title, content: post.content }) %>
+        <%- include("postNode", { title: post.title, content: post.content, admin: post.admin }) %>
         <%}%>
     <%- include("../main/htmlEnd") %>
 </div>

@@ -37,55 +37,83 @@ function setSettings(config) {
 GET
 */
 function getController(app, models) {
-  app.get("/", function(req, res) {
+  app.get("/", function (req, res) {
     postsPage(res);
   });
 
   /*********
   BLOG POST
   *********/
-  app.get("/posts", function(req, res) {
+  app.get("/posts", function (req, res) {
     postsPage(res);
   });
 
   function postsPage(res) {
     Post.find()
       .limit(10)
-      .exec(function(err, docs) {
+      .exec(function (err, docs) {
         if (err) return console.log(err);
 
-        let posts = [];
+        function getAdminNames() {
+          promise = new Promise(function (resolve, reject) {
+            Admin.find(function (err, admins) {
+              adminNames = new Array(100);
 
-        index = 0;
-        docsLength = docs.length;
+              adminsLength = admins.length;
+              index = 0;
 
-        for (index = 0; index < docsLength; index++) {
-          let reverseIndex = docsLength - index - 1;
+              for (index = 0; index < adminsLength; index++) {
+                adminNames.splice(admins[index].id, 0, admins[index].name);
+              }
 
-          let post = {
-            title: docs[reverseIndex].title,
-            content: docs[reverseIndex].content
-          };
-
-          posts.push(post);
+              resolve(adminNames);
+            });
+          });
+          return promise;
         }
 
-        if (posts.length == 0) {
-          res.send("No posts found.");
-        } else {
-          res.render("posts/feed", { posts: posts });
+        function showPosts(admins) {
+          promise = new Promise(function (resolve, reject) {
+            let posts = [];
+
+            index = 0;
+            docsLength = docs.length;
+
+            for (index = 0; index < docsLength; index++) {
+              let reverseIndex = docsLength - index - 1;
+
+              let post = {
+                title: docs[reverseIndex].title,
+                content: docs[reverseIndex].content,
+                admin: admins[docs[reverseIndex].adminId]
+              };
+
+              posts.push(post);
+            }
+
+            if (posts.length == 0) {
+              res.send("No posts found.");
+            } else {
+              res.render("posts/feed", { posts: posts });
+            }
+
+            resolve();
+          });
+          return promise;
         }
+
+        getAdminNames().then(showPosts);
       });
   }
 
-  app.get("/posts/create", function(req, res) {
+  app.get("/posts/create", function (req, res) {
     res.render("posts/create");
   });
-  app.get("/posts/:id", function(req, res) {
+  app.get("/posts/:id", function (req, res) {
     res.header("Cache-Control", "no-cache");
     const id = req.params.id;
 
-    Post.findOne({ id: id }, function(err, post) {
+    Post.findOne({ id: id }, function (err, post) {
       if (err) return console.log(err);
 
       if (post) {
@@ -99,9 +127,9 @@ function getController(app, models) {
       }
     });
   });
-  app.get("/posts/:id/update", function(req, res) {
+  app.get("/posts/:id/update", function (req, res) {
     const id = req.params.id;
-    Post.findOne({ id: id }, function(err, post) {
+    Post.findOne({ id: id }, function (err, post) {
       if (err) return console.log(err);
 
       if (post) {
@@ -115,15 +143,15 @@ function getController(app, models) {
       }
     });
   });
-  app.get("/posts/:id/delete", function(req, res) {
+  app.get("/posts/:id/delete", function (req, res) {
     const id = req.params.id;
     res.render("posts/delete", {
       id: id
     });
   });
-  app.get("/posts/:id/delete/yes", function(req, res) {
+  app.get("/posts/:id/delete/yes", function (req, res) {
     const id = req.params.id;
-    Post.deleteOne({ id: id }, function(err) {
+    Post.deleteOne({ id: id }, function (err) {
       if (err) return console.log(err);
       res.status(304).redirect("/");
     });
@@ -133,10 +161,10 @@ function getController(app, models) {
   ADMIN
   ****/
 
-  app.get("/admin/create", function(req, res) {
+  app.get("/admin/create", function (req, res) {
     res.end();
   });
-  app.get("/admin/login", function(req, res) {
+  app.get("/admin/login", function (req, res) {
     res.render("admin/login");
   });
 }
@@ -148,15 +176,15 @@ function postController(app, models) {
   /********
   BLOG POST
   ********/
-  app.post("/posts/create", function(req, res) {
+  app.post("/posts/create", function (req, res) {
     const { title, content } = req.body;
 
     function loginByToken() {
-      promise = new Promise(function(resolve, reject) {
-        adminLoginByToken(req.signedCookies.token, function(err, logged, id) {
+      promise = new Promise(function (resolve, reject) {
+        adminLoginByToken(req.signedCookies.token, function (err, logged, id) {
 
           if (err) reject(err);
-          
+
           if (logged) resolve(id);
           else reject("Permission denied.");
         });
@@ -166,14 +194,14 @@ function postController(app, models) {
 
     /*Post ID increment*/
     function incrementPost(adminId) {
-      promise = new Promise(function(resolve, reject) {
+      promise = new Promise(function (resolve, reject) {
         Increment.findOneAndUpdate(
           { id: "increment" },
           { $inc: { post: 1 } },
           {
             new: true
           },
-          function(err, doc) {
+          function (err, doc) {
             let postIds = {};
 
             if (err) reject(err);
@@ -189,9 +217,9 @@ function postController(app, models) {
 
     /*Post creation*/
     function postCreate(ids) {
-      promise = new Promise(function(resolve, reject) {
+      promise = new Promise(function (resolve, reject) {
         const { post, admin } = ids;
-        
+
         postNew = new Post({
           title: title,
           content: content,
@@ -199,7 +227,7 @@ function postController(app, models) {
           adminId: admin
         });
 
-        postNew.save(function(err) {
+        postNew.save(function (err) {
           if (err) reject(err);
           resolve(post);
         });
@@ -210,16 +238,16 @@ function postController(app, models) {
     loginByToken()
       .then(incrementPost)
       .then(postCreate)
-      .then(function(id) {
+      .then(function (id) {
         res.status(304).redirect("/posts/" + id);
       })
-      .catch(function(error) {
+      .catch(function (error) {
         console.log("Error: " + error);
         res.send("Permission denied.");
       });
   });
 
-  app.post("/posts/update", function(req, res) {
+  app.post("/posts/update", function (req, res) {
     const { title, content, id } = req.body;
 
     Post.findOneAndUpdate(
@@ -228,7 +256,7 @@ function postController(app, models) {
       {
         new: true
       },
-      function(err) {
+      function (err) {
         if (err) return console.log(err);
 
         res.status(304).redirect("/posts/" + id);
@@ -240,18 +268,18 @@ function postController(app, models) {
   ADMIN
   ****/
 
-  app.post("/admin/login", function(req, res) {
+  app.post("/admin/login", function (req, res) {
     const { email, password } = req.body;
 
     const token = encrypt(`${Math.random() * 1000}${email}`, getSecretKey());
 
     /*Find Admin and, if credentials is valid, set a token in DB*/
     function findAndUpdateAdmin() {
-      promise = new Promise(function(resolve, reject) {
+      promise = new Promise(function (resolve, reject) {
         Admin.findOneAndUpdate(
           { email: email, password: password },
           { $set: { token: token } },
-          function(err, doc) {
+          function (err, doc) {
             if (err) reject(err);
 
             /*Check document existence*/
@@ -265,7 +293,7 @@ function postController(app, models) {
 
     /*Set cookie "token" in browser*/
     function setBrowserToken(adminFound) {
-      promise = new Promise(function(resolve, reject) {
+      promise = new Promise(function (resolve, reject) {
         if (adminFound) {
           res.cookie("token", token, { signed: true });
           resolve(true);
@@ -276,7 +304,7 @@ function postController(app, models) {
 
     /*Redirect to home page or send error*/
     function redirectOrError(cookieDone) {
-      promise = new Promise(function(resolve, reject) {
+      promise = new Promise(function (resolve, reject) {
         if (cookieDone) res.status(304).redirect("/");
         else res.send("Invalid credentials!");
         resolve();
@@ -287,7 +315,7 @@ function postController(app, models) {
     findAndUpdateAdmin()
       .then(setBrowserToken)
       .then(redirectOrError)
-      .catch(function(reason) {
+      .catch(function (reason) {
         console.log("Error! " + reason);
       });
   });
@@ -307,8 +335,8 @@ function adminLoginByToken(token, callback) {
   if (!token) return callback("Empty token", false);
 
   function findAdminAndSetId() {
-    promise = new Promise(function(resolve, reject) {
-      Admin.findOne({ token: token }, function(err, doc) {
+    promise = new Promise(function (resolve, reject) {
+      Admin.findOne({ token: token }, function (err, doc) {
         if (err) reject(err);
 
         id = doc.id;
@@ -319,7 +347,7 @@ function adminLoginByToken(token, callback) {
   }
 
   function setLogged(exists) {
-    promise = new Promise(function(resolve, reject) {
+    promise = new Promise(function (resolve, reject) {
       if (exists) {
         logged = true;
         resolve();
@@ -330,10 +358,10 @@ function adminLoginByToken(token, callback) {
 
   findAdminAndSetId()
     .then(setLogged)
-    .finally(function() {
+    .finally(function () {
       callback("", logged, id);
     })
-    .catch(function(error) {
+    .catch(function (error) {
       callback(error, logged, -1);
     });
 }
