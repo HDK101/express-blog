@@ -27,6 +27,7 @@
     "cookie-parser": "^1.4.4",
     "ejs": "^3.0.1",
     "express": "^4.17.1",
+    "minimist": "^1.2.5",
     "mongoose": "^5.8.9",
     "pm2": "^4.2.3"
   },
