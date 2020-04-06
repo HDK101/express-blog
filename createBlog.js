@@ -2,6 +2,7 @@ const { Admin, Increment } = require("./models/models");
 const { setConfig } = require("./Server/configParser");
 const readline = require("readline");
 const mongoose = require("mongoose");
+const { encrypt } = require("./components/crypto");
 
 /*Models */
 var mainAdminDb;
@@ -11,7 +12,10 @@ incrementDb = new Increment();
 var adminName, adminEmail, adminPassword;
 
 /*Blog settings*/
-var blogName, blogPort;
+var blogName, blogPort; 
+
+/*Blog key*/
+var blogKey;
 
 const reader = readline.createInterface({
   input: process.stdin,
@@ -88,11 +92,11 @@ function setConfigJSON() {
       }
       return key;
     }
-    const generatedKey = generateKey();
+    blogKey = generateKey();
     config = {
       blogName: blogName,
       port: blogPort,
-      secretKey: generatedKey,
+      secretKey: blogKey,
       initialized: true
     };
     setConfig(config);
@@ -139,7 +143,7 @@ function createAdmin(count) {
     mainAdminDb = new Admin({
       name: adminName,
       email: adminEmail,
-      password: adminPassword,
+      password: encrypt(adminPassword, blogKey),
       main: true,
       id: 0
     });
@@ -197,7 +201,6 @@ askAdminName()
   .then(createAdmin)
   .then(checkIncrementExistence)
   .then(createIncrement)
-  .then(function() {})
   .finally(function() {
     console.log("Everything done!");
     process.exit();
