@@ -1,13 +1,12 @@
 <%- include("../main/htmlStart") %>
-<div class="blog-logo">
-    <h1>Blog system</h1>
-</div>
 <div class="feed">
     <% index = 0 %>
     <% postsLength = posts.length %>
+    <% if(postsLength > 0) { %>
     <% for(index = 0; index < postsLength; index++) { %>
     <% post = posts[index] %>
     <%- include("postNode", { post: post }) %>
     <%}%>
-    <%- include("../main/htmlEnd") %>
+    <%}%>
 </div>
+<%- include("../main/htmlEnd") %>
