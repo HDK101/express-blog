@@ -1,16 +1,33 @@
+*{
+  margin: 0px;
+}
+
 /*CLASSES*/
-.feed {
-  width: 100%;
+
+.blog-logo {
+  width: 100vw;
+  height: 100px;
+  background-color: rgb(153, 153, 238);
   display: flex;
   align-items: center;
   flex-flow: column;
 }
 
-.post {
+.feed {
+  width: 100%;
+  height: auto;
+  display: flex;
+  align-items: center;
+  flex-flow: column;
+}
+
+.blog-block {
+  height: auto;
   width: 90vw;
   background-color: rgb(153, 153, 238);
   margin: 10px;
   display: flex;
   align-items: center;
+  justify-content: center;
   flex-flow: column;
 }
