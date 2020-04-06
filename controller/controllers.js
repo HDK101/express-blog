@@ -91,11 +91,7 @@ function getController(app, models) {
               posts.push(post);
             }
 
-            if (posts.length == 0) {
-              res.send("No posts found.");
-            } else {
-              res.render("posts/feed", { posts: posts });
-            }
+            res.render("posts/feed", { posts: posts });
 
             resolve();
           });
@@ -272,12 +268,13 @@ function postController(app, models) {
     const { email, password } = req.body;
 
     const token = encrypt(`${Math.random() * 1000}${email}`, getSecretKey());
+    const encryptedPassword = encrypt(password, getSecretKey());
 
     /*Find Admin and, if credentials is valid, set a token in DB*/
     function findAndUpdateAdmin() {
       promise = new Promise(function (resolve, reject) {
         Admin.findOneAndUpdate(
-          { email: email, password: password },
+          { email: email, password: encryptedPassword },
           { $set: { token: token } },
           function (err, doc) {
             if (err) reject(err);
