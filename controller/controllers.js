@@ -115,9 +115,7 @@ function getController(app, models) {
 
       if (post) {
         res.render("posts/read", {
-          title: post.title,
-          content: post.content,
-          id: id,
+          post: post
         });
       } else {
         res.send("Post not found!");
@@ -163,19 +161,18 @@ function getController(app, models) {
 
           if (logged) {
             adminId = admin.id;
-            resolve(id);
+            resolve(admin);
           } else reject("Permission denied.");
         });
       });
       return promise;
     }
 
-    function checkOwner() {
-      postParameters = { id: id, adminId: adminId };
-
+    function checkOwner(admin) {
       promise = new Promise(function (resolve, reject) {
-        Post.findOne(postParameters, function (err, doc) {
-          if (doc != null) resolve();
+        Post.findOne({ id: id }, function (err, doc) {
+          if ((doc != null) & (doc.adminId == admin.id) || admin.main)
+            resolve();
           else reject("Invalid post or not an owner.");
         });
       });
@@ -183,7 +180,7 @@ function getController(app, models) {
     }
 
     function deletePost() {
-      Post.deleteOne(postParameters, function (err) {
+      Post.deleteOne({ id: id }, function (err) {
         if (err) return console.log(err);
         res.status(304).redirect("/");
       });
@@ -218,73 +215,7 @@ function postController(app, models) {
   BLOG POST
   ********/
   app.post("/posts/create", function (req, res) {
-    const { title, content } = req.body;
-
-    function loginByToken() {
-      promise = new Promise(function (resolve, reject) {
-        adminLoginByToken(req.signedCookies.token, function (
-          err,
-          logged,
-          admin
-        ) {
-          if (err) reject(err);
-
-          if (logged) resolve(admin);
-          else reject("Permission denied.");
-        });
-      });
-      return promise;
-    }
-
-    /*Post ID increment*/
-    function incrementPost(admin) {
-      promise = new Promise(function (resolve, reject) {
-        Increment.findOneAndUpdate(
-          { id: "increment" },
-          { $inc: { post: 1 } },
-          {
-            new: true,
-          },
-          function (err, doc) {
-            let postIds = {};
-
-            if (err) reject(err);
-
-            postIds = Object.assign(postIds, {
-              postId: doc.post,
-              adminId: admin.id,
-            });
-
-            resolve(postIds);
-          }
-        );
-      });
-      return promise;
-    }
-
-    /*Post creation*/
-    function postCreate(postIds) {
-      promise = new Promise(function (resolve, reject) {
-        const { postId, adminId } = postIds;
-
-        postNew = new Post({
-          title: title,
-          content: content,
-          id: postId,
-          adminId: adminId,
-        });
-
-        postNew.save(function (err) {
-          if (err) reject(err);
-          resolve(postId);
-        });
-      });
-      return promise;
-    }
-
-    loginByToken()
-      .then(incrementPost)
-      .then(postCreate)
+    createPost(req.body, req.signedCookies.token)
       .then(function (id) {
         res.status(304).redirect("/posts/" + id);
       })
@@ -415,4 +346,74 @@ function adminLoginByToken(token, callback) {
     });
 }
 
-module.exports = { setKey, getController, postController, adminLoginByToken };
+function createPost(post, token) {
+  const { title, content } = post;
+
+  function loginByToken() {
+    promise = new Promise(function (resolve, reject) {
+      adminLoginByToken(token, function (err, logged, admin) {
+        if (err) reject(err);
+
+        if (logged) resolve(admin);
+        else reject("Permission denied.");
+      });
+    });
+    return promise;
+  }
+
+  /*Post ID increment*/
+  function incrementPost(admin) {
+    promise = new Promise(function (resolve, reject) {
+      Increment.findOneAndUpdate(
+        { id: "increment" },
+        { $inc: { post: 1 } },
+        {
+          new: true,
+        },
+        function (err, doc) {
+          let postIds = {};
+
+          if (err) reject(err);
+
+          postIds = Object.assign(postIds, {
+            postId: doc.post,
+            adminId: admin.id,
+          });
+
+          resolve(postIds);
+        }
+      );
+    });
+    return promise;
+  }
+
+  /*Post creation*/
+  function postCreate(postIds) {
+    promise = new Promise(function (resolve, reject) {
+      const { postId, adminId } = postIds;
+
+      postNew = new Post({
+        title: title,
+        content: content,
+        id: postId,
+        adminId: adminId,
+      });
+
+      postNew.save(function (err) {
+        if (err) reject(err);
+        resolve(postId);
+      });
+    });
+    return promise;
+  }
+
+  return loginByToken().then(incrementPost).then(postCreate);
+}
+
+module.exports = {
+  setKey,
+  getController,
+  postController,
+  adminLoginByToken,
+  createPost,
+};

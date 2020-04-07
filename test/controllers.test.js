@@ -1,5 +1,5 @@
-const { adminLoginByToken } = require("../controller/controllers");
-const { Admin } = require("../models/models");
+const { adminLoginByToken, createPost } = require("../controller/controllers");
+const { Admin, Post, Increment } = require("../models/models");
 const { closeConnection, connect } = require("../Server/server");
 const assert = require("assert");
 const { getConfig } = require("../Server/configParser");
@@ -14,14 +14,14 @@ describe("Methods for Controllers file", () => {
     password: "Password",
     token: token,
     main: true,
-    id: 0
+    id: 0,
   });
-  before(function(done) {
+  before(function (done) {
     connect(config.blogName, true);
 
     function adminCount() {
-      promise = new Promise(function(resolve, reject) {
-        Admin.countDocuments({ id: 0 }, function(err, count) {
+      promise = new Promise(function (resolve, reject) {
+        Admin.countDocuments({ id: 0 }, function (err, count) {
           if (err) reject(err);
           resolve(count);
         });
@@ -30,9 +30,9 @@ describe("Methods for Controllers file", () => {
     }
 
     function saveAdmin(count) {
-      promise = new Promise(function(resolve) {
+      promise = new Promise(function (resolve) {
         if (count == 0) {
-          testAdmin.save(function() {
+          testAdmin.save(function () {
             console.log("Test admin saved!");
             resolve();
           });
@@ -41,17 +41,32 @@ describe("Methods for Controllers file", () => {
       return promise;
     }
 
+    function createIncrement() {
+      promise = new Promise(function (resolve, reject) {
+        incrementDb = new Increment();
+        incrementDb.save(function (err) {
+          if (err) reject(err);
+          console.log("Increment created!");
+          resolve();
+        });
+      });
+      return promise;
+    }
+
     Promise.resolve()
       .then(adminCount)
       .then(saveAdmin)
-      .then(function() {
+      .then(createIncrement)
+      .then(function () {
         done();
       });
   });
-  it("login admin by token(should return true)", done => {
-    function loginByToken() {
-      promise = new Promise(function(resolve) {
-        adminLoginByToken(token, function(logged) {
+  it("login admin by token(should return true)", (done) => {
+    function testAdminLoginByToken() {
+      promise = new Promise(function (resolve) {
+        adminLoginByToken(token, function (err, logged, admin) {
+          if (err) throw err;
+
           logged && resolve(true);
           !logged && reject(false);
         });
@@ -59,15 +74,37 @@ describe("Methods for Controllers file", () => {
       return promise;
     }
 
-    Promise.resolve()
-      .then(loginByToken)
-      .then(function(logged) {
+    testAdminLoginByToken()
+      .then(function (logged) {
         console.log("Logged? " + logged);
         assert(logged == true);
         done();
       })
-      .catch(function() {
-        assert.fail("This should not be happening!");
+      .catch(function (err) {
+        assert.fail("This should not be happening! " + err);
+      });
+  });
+  it("create and return post", (done) => {
+    testPost = { title: "Testing title.", content: "Testing content." };
+
+    function testCreatePost() {
+      return createPost(testPost, token);
+    }
+
+    function checkPost(id) {
+      Post.findOne({ id: id }, function (err, post) {
+        if (err) console.log(err);
+
+        assert(post.title == testPost.title);
+        assert(post.content == testPost.content);
+        done();
+      });
+    }
+
+    testCreatePost()
+      .then(checkPost)
+      .catch(function () {
+        assert.fail("This should not be happening! " + err);
       });
   });
   after(() => {
