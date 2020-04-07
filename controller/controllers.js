@@ -346,6 +346,13 @@ function adminLoginByToken(token, callback) {
     });
 }
 
+/**
+ * Function that creates a post, requires token.
+ * Returns a promise.
+ * 
+ * @param { Object } post 
+ * @param { String } token 
+ */
 function createPost(post, token) {
   const { title, content } = post;
 
