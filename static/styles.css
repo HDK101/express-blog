@@ -2,6 +2,10 @@
   margin: 0px;
 }
 
+a{
+  text-decoration: none;
+}
+
 /*CLASSES*/
 
 .blog-logo {
@@ -31,3 +35,5 @@
   justify-content: center;
   flex-flow: column;
 }
+
+
