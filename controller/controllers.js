@@ -115,7 +115,8 @@ function getController(app, models) {
 
       if (post) {
         res.render("posts/read", {
-          post: post
+          post: post,
+          id: id,
         });
       } else {
         res.send("Post not found!");
@@ -147,48 +148,10 @@ function getController(app, models) {
   app.get("/posts/:id/delete/yes", function (req, res) {
     const id = req.params.id;
 
-    let adminId;
-    let postParameters = {};
-
-    function loginByToken() {
-      promise = new Promise(function (resolve, reject) {
-        adminLoginByToken(req.signedCookies.token, function (
-          err,
-          logged,
-          admin
-        ) {
-          if (err) reject(err);
-
-          if (logged) {
-            adminId = admin.id;
-            resolve(admin);
-          } else reject("Permission denied.");
-        });
-      });
-      return promise;
-    }
-
-    function checkOwner(admin) {
-      promise = new Promise(function (resolve, reject) {
-        Post.findOne({ id: id }, function (err, doc) {
-          if ((doc != null) & (doc.adminId == admin.id) || admin.main)
-            resolve();
-          else reject("Invalid post or not an owner.");
-        });
-      });
-      return promise;
-    }
-
-    function deletePost() {
-      Post.deleteOne({ id: id }, function (err) {
-        if (err) return console.log(err);
+    deletePost(id, req.signedCookies.token)
+      .then(function () {
         res.status(304).redirect("/");
-      });
-    }
-
-    loginByToken()
-      .then(checkOwner)
-      .then(deletePost)
+      })
       .catch(function (error) {
         console.log("Error: " + error);
         res.send("Permission denied.");
@@ -349,9 +312,9 @@ function adminLoginByToken(token, callback) {
 /**
  * Function that creates a post, requires token.
  * Returns a promise.
- * 
- * @param { Object } post 
- * @param { String } token 
+ *
+ * @param { Object } post
+ * @param { String } token
  */
 function createPost(post, token) {
   const { title, content } = post;
@@ -415,6 +378,50 @@ function createPost(post, token) {
   }
 
   return loginByToken().then(incrementPost).then(postCreate);
+}
+
+/**
+ * Function that deletes a post, requires his id and admin token.
+ * Returns a promise.
+ * 
+ * @param { Number } postId 
+ * @param { String } token 
+ */
+function deletePost(postId, token) {
+  let adminId;
+
+  function loginByToken() {
+    promise = new Promise(function (resolve, reject) {
+      adminLoginByToken(token, function (err, logged, admin) {
+        if (err) reject(err);
+
+        if (logged) {
+          adminId = admin.id;
+          resolve(admin);
+        } else reject("Permission denied.");
+      });
+    });
+    return promise;
+  }
+
+  function checkOwner(admin) {
+    promise = new Promise(function (resolve, reject) {
+      Post.findOne({ id: postId }, function (err, doc) {
+        if (err) reject(err);
+        if ((doc != null) & (doc.adminId == admin.id) || admin.main) resolve();
+        else reject("Invalid post or not an owner.");
+      });
+    });
+    return promise;
+  }
+
+  function postDelete() {
+    return Post.deleteOne({ id: postId }, function (err) {
+      if (err) reject(err);
+    });
+  }
+
+  return loginByToken().then(checkOwner).then(postDelete);
 }
 
 module.exports = {
