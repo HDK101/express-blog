@@ -1,5 +1,7 @@
 <%- include("../main/htmlStart") %>
 <div class="feed">
   <%- include("postNode", { post: post }) %>
+  <a href="/posts/<%=id%>/update">Update</a>
+  <a href="/posts/<%=id%>/delete">Delete</a>
 </div>
 <%- include("../main/htmlEnd") %>
