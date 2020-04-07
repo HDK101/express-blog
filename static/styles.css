@@ -7,14 +7,44 @@ a{
 }
 
 /*CLASSES*/
+.blog {
+  display: flex;
+  align-items: center;
+  flex-flow: column;
+  background-color: rgb(153, 153, 238);
+}
+
+.blog-wall {
+  width: 100vw;
+  height: 900px;
+}
+.blog-createpost {
+  width: 100%;
+  height: 900px;
+}
+.blog-input {
+  margin: 10px;
+  width: 100%;
+}
+.blog-input--title {
+  min-width: 200px;
+  max-width: 400px;
+}
+.blog-input--content {
+  text-align: center;
+  height: 800px;
+  min-width: 400px;
+  max-width: 800px;
+}
+
+.blog-text--content {
+  text-align: center;
+  white-space: pre-wrap;
+}
 
 .blog-logo {
   width: 100vw;
   height: 100px;
-  background-color: rgb(153, 153, 238);
-  display: flex;
-  align-items: center;
-  flex-flow: column;
 }
 
 .feed {

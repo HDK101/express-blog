@@ -1,7 +1,10 @@
 <%- include("../main/htmlStart") %>
-<form method="POST" action="/posts/create">
-  <input type="text" name="title" />
-  <input type="text" name="content" />
-  <input type="submit" />
-</form>
+<div class="blog blog-wall">
+  <form method="POST" action="/posts/create" class="blog blog-createpost">
+    <input class="blog-input blog-input--title" type="text" name="title" />
+    <!-- <input class="blog-input blog-input--content" type="text" name="content" /> -->
+    <textarea class="blog-input blog-input--content" name="content" cols="30" rows="10"></textarea>
+    <input type="submit" />
+  </form>
+</div>
 <%- include("../main/htmlEnd") %>

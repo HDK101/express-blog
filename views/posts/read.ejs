@@ -1,6 +1,5 @@
 <%- include("../main/htmlStart") %>
-<h1><%=title%></h1>
-<p><%=content%></p>
-<a href="/posts/<%=id%>/update">Update</a>
-<a href="/posts/<%=id%>/delete">Delete</a>
+<div class="feed">
+  <%- include("postNode", { post: post }) %>
+</div>
 <%- include("../main/htmlEnd") %>
