@@ -1,9 +1,6 @@
 <div class="blog-block">
   <a href="/posts/<%=post.id%>"><h1><%=post.title%></h1></a>
   <p class="blog-text--content"><%=post.content%></p>
-  <br />
-  <br />
-  <br />
   <%if(post.admin != undefined) {%>
   <p>Posted by <%=post.admin%></p>
   <%}%>
