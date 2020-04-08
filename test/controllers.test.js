@@ -1,4 +1,8 @@
-const { adminLoginByToken, createPost } = require("../controller/controllers");
+const {
+  adminLoginByToken,
+  createPost,
+  deletePost,
+} = require("../controller/controllers");
 const { Admin, Post, Increment } = require("../models/models");
 const { closeConnection, connect } = require("../Server/server");
 const assert = require("assert");
@@ -57,15 +61,13 @@ describe("Methods for Controllers file", () => {
       .then(adminCount)
       .then(saveAdmin)
       .then(createIncrement)
-      .then(function () {
-        done();
-      });
+      .finally(done);
   });
   it("login admin by token(should return true)", (done) => {
     function testAdminLoginByToken() {
       promise = new Promise(function (resolve) {
         adminLoginByToken(token, function (err, logged, admin) {
-          if (err) throw err;
+          if (err) reject(err);
 
           logged && resolve(true);
           !logged && reject(false);
@@ -93,7 +95,7 @@ describe("Methods for Controllers file", () => {
 
     function checkPost(id) {
       Post.findOne({ id: id }, function (err, post) {
-        if (err) console.log(err);
+        if (err) reject(err);
 
         assert(post.title == testPost.title);
         assert(post.content == testPost.content);
@@ -104,6 +106,38 @@ describe("Methods for Controllers file", () => {
     testCreatePost()
       .then(checkPost)
       .catch(function () {
+        assert.fail("This should not be happening! " + err);
+      });
+  });
+  it("create and delete post", (done) => {
+    testPost = { title: "Testing title.", content: "Testing content." };
+
+    var testId;
+
+    function testCreatePost() {
+      return createPost(testPost, token);
+    }
+
+    function testDeletePost(id) {
+      testId = id;
+      return deletePost(id, token);
+    }
+
+    function checkPost() {
+      Post.findOne({ id: testId }, function (err, post) {
+        if (err) reject(err);
+
+        console.log("Post existence: " + post);
+
+        assert(post == null);
+        done();
+      });
+    }
+
+    testCreatePost()
+      .then(testDeletePost)
+      .then(checkPost)
+      .catch(function (err) {
         assert.fail("This should not be happening! " + err);
       });
   });
