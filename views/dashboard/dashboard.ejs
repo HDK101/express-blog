@@ -1,0 +1,21 @@
+<%- include("../main/htmlStart") %>
+<div class="feed">
+    <a href="/posts/create">Create post</a>
+    <% if(main) { %>
+    <a href="/admin/create">Create another admin</a>
+    <% } %>
+</div>
+<div class="feed">
+    <div class="blog-block">
+        <h1>Your posts</h1>
+    </div>
+    <% index = 0 %>
+    <% postsLength = posts.length %>
+    <% if(postsLength > 0) { %>
+    <% for(index = 0; index < postsLength; index++) { %>
+    <% post = posts[index] %>
+    <%- include("../posts/postNode", { post: post }) %>
+    <%}%>
+    <%}%>
+</div>
+<%- include("../main/htmlEnd") %>

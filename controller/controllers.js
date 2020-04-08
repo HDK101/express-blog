@@ -168,6 +168,70 @@ function getController(app, models) {
   app.get("/admin/login", function (req, res) {
     res.render("admin/login");
   });
+
+  /******** 
+  DASHBOARD
+  ********/
+
+  app.get("/dashboard", function (req, res) {
+    var loggedAdmin = {};
+    var adminPosts = [];
+
+    function loginByToken() {
+      promise = new Promise(function (resolve, reject) {
+        adminLoginByToken(req.signedCookies.token, function (
+          err,
+          logged,
+          admin
+        ) {
+          if (err) reject(err);
+
+          loggedAdmin = admin;
+
+          if (logged) resolve(admin);
+          else reject("Permission denied.");
+        });
+      });
+      return promise;
+    }
+
+    function getPosts() {
+      promise = new Promise(function (resolve, reject) {
+        Post.find({ adminId: loggedAdmin.id }, function (err, docs) {
+          if (err) reject(err);
+
+          docsLength = docs.length;
+
+          for (index = 0; index < docsLength; index++) {
+            let reverseIndex = docsLength - index - 1;
+
+            let post = {
+              title: docs[reverseIndex].title,
+              content: docs[reverseIndex].content,
+              id: docs[reverseIndex].id,
+            };
+
+            adminPosts.push(post);
+          }
+
+          resolve();
+        });
+      });
+      return promise;
+    }
+
+    loginByToken()
+      .then(getPosts)
+      .then(function () {
+        const { main, id } = loggedAdmin;
+
+        res.render("dashboard/dashboard", {
+          main: main,
+          id: id,
+          posts: adminPosts,
+        });
+      });
+  });
 }
 
 /*
@@ -295,9 +359,9 @@ function adminLoginByToken(token, callback) {
     return promise;
   }
 
-  findAdminAndSetId()
+  return findAdminAndSetId()
     .then(setLogged)
-    .finally(function () {
+    .then(function () {
       callback("", logged, admin);
     })
     .catch(function (error) {
