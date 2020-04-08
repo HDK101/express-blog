@@ -189,20 +189,16 @@ function postController(app, models) {
   });
 
   app.post("/posts/update", function (req, res) {
-    const { title, content, id } = req.body;
+    const { id } = req.body;
 
-    Post.findOneAndUpdate(
-      { id: id },
-      { $set: { title: title, content: content } },
-      {
-        new: true,
-      },
-      function (err) {
-        if (err) return console.log(err);
-
+    updatePost(req.body, req.signedCookies.token)
+      .then(function () {
         res.status(304).redirect("/posts/" + id);
-      }
-    );
+      })
+      .catch(function (error) {
+        console.log("Error: " + error);
+        res.send("Permission denied.");
+      });
   });
 
   /****
@@ -381,11 +377,60 @@ function createPost(post, token) {
 }
 
 /**
+ * Function that updates a post, requires token.
+ * Returns a promise.
+ *
+ * @param { Object } post
+ * @param { String } token
+ */
+function updatePost(post, token) {
+  function loginByToken() {
+    promise = new Promise(function (resolve, reject) {
+      adminLoginByToken(token, function (err, logged, admin) {
+        if (err) reject(err);
+
+        if (logged) {
+          adminId = admin.id;
+          resolve(admin);
+        } else reject("Permission denied.");
+      });
+    });
+    return promise;
+  }
+
+  function checkOwner(admin) {
+    promise = new Promise(function (resolve, reject) {
+      Post.findOne({ id: post.id }, function (err, doc) {
+        if (err) reject(err);
+        if ((doc != null) & (doc.adminId == admin.id) || admin.main) resolve();
+        else reject("Invalid post or not an owner.");
+      });
+    });
+    return promise;
+  }
+
+  function postUpdate() {
+    return Post.findOneAndUpdate(
+      { id: post.id },
+      { $set: { title: post.title, content: post.content } },
+      {
+        new: true,
+      },
+      function (err) {
+        if (err) return console.log(err);
+      }
+    );
+  }
+
+  return loginByToken().then(checkOwner).then(postUpdate);
+}
+
+/**
  * Function that deletes a post, requires his id and admin token.
  * Returns a promise.
- * 
- * @param { Number } postId 
- * @param { String } token 
+ *
+ * @param { Number } postId
+ * @param { String } token
  */
 function deletePost(postId, token) {
   let adminId;
@@ -430,4 +475,5 @@ module.exports = {
   postController,
   adminLoginByToken,
   createPost,
+  deletePost,
 };
