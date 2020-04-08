@@ -1,6 +1,7 @@
 const {
   adminLoginByToken,
   createPost,
+  updatePost,
   deletePost,
 } = require("../controller/controllers");
 const { Admin, Post, Increment } = require("../models/models");
@@ -141,7 +142,67 @@ describe("Methods for Controllers file", () => {
         assert.fail("This should not be happening! " + err);
       });
   });
+  it("create and update post", (done) => {
+    testPost = { title: "Testing title.", content: "Testing content." };
+    testUpdatedPost = { title: "Updated title.", content: "Updated content." };
+
+    var testId;
+
+    function testCreatePost() {
+      return createPost(testPost, token);
+    }
+
+    function testUpdatePost(id) {
+      testId = id;
+
+      testUpdatedPost = Object.assign(testUpdatedPost, { id: id });
+      return updatePost(testUpdatedPost, token);
+    }
+
+    function checkPost() {
+      Post.findOne({ id: testId }, function (err, post) {
+        if (err) reject(err);
+
+        assert(post.title == testUpdatedPost.title);
+        assert(post.content == testUpdatedPost.content);
+
+        console.table({
+          title: post.title,
+          content: post.content,
+          id: post.id,
+        });
+
+        assert(post.title != testPost.title);
+        assert(post.content != testPost.content);
+
+        done();
+      });
+    }
+
+    testCreatePost()
+      .then(testUpdatePost)
+      .then(checkPost)
+      .catch(function (err) {
+        assert.fail("This should not be happening! " + err);
+      });
+  });
   after(() => {
-    closeConnection();
+    function deletePosts() {
+      return Post.deleteMany({}, function (err) {
+        if (err) console.log(err);
+
+        console.log("Posts removed");
+      });
+    }
+
+    function deleteIncrements() {
+      return Increment.deleteMany({}, function (err) {
+        if (err) console.log(err);
+
+        console.log("Increments removed");
+      });
+    }
+
+    deletePosts().then(deleteIncrements).finally(closeConnection);
   });
 });

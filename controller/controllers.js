@@ -475,5 +475,6 @@ module.exports = {
   postController,
   adminLoginByToken,
   createPost,
+  updatePost,
   deletePost,
 };
