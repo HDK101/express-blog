@@ -1,11 +1,11 @@
 <%- include("../main/htmlStart") %>
-<div class="blog-block">
-    <a href="/posts/create">Create post</a>
-    <% if(main) { %>
-    <a href="/admin/create">Create another admin</a>
-    <% } %>
-</div>
 <div class="feed">
+    <div class="blog-block">
+        <a href="/posts/create">Create post</a>
+        <% if(main) { %>
+        <a href="/admin/create">Create another admin</a>
+        <% } %>
+    </div>
     <div class="blog-block">
         <h1>Your posts</h1>
     </div>
