@@ -1,5 +1,5 @@
-var { encrypt, decrypt } = require("../components/crypto");
-const { Increment, Admin, Comment, Post, User } = require("../models/models");
+var { encrypt } = require("../components/crypto");
+const { Increment, Admin, Post } = require("../models/models");
 
 settings = {};
 
@@ -11,14 +11,6 @@ const getSecretKey = () => {
 /*
 Controller settings
 */
-
-/**
- *
- * @param { string } key - Key for encrypting
- */
-function setKey(key) {
-  settings.secretKey = key;
-}
 
 /**
  *
@@ -36,7 +28,7 @@ function setSettings(config) {
 /*
 GET
 */
-function getController(app, models) {
+function getController(app) {
   app.get("/", function (req, res) {
     postsPage(res);
   });
@@ -50,7 +42,6 @@ function getController(app, models) {
 
   function postsPage(res) {
     Post.find()
-      .limit(10)
       .exec(function (err, docs) {
         if (err) return console.log(err);
 
@@ -152,10 +143,7 @@ function getController(app, models) {
       .then(function () {
         res.status(304).redirect("/");
       })
-      .catch(function (error) {
-        console.log("Error: " + error);
-        res.send("Permission denied.");
-      });
+      .catch(handleError);
   });
 
   /****
@@ -163,7 +151,28 @@ function getController(app, models) {
   ****/
 
   app.get("/admin/create", function (req, res) {
-    res.end();
+    function loginByToken() {
+      promise = new Promise(function (resolve, reject) {
+        adminLoginByToken(req.signedCookies.token, function (
+          err,
+          logged,
+          admin
+        ) {
+          if (err) reject(err);
+
+          if (admin.main) {
+            resolve();
+          } else reject("Permission denied.");
+        });
+      });
+      return promise;
+    }
+
+    loginByToken()
+      .then(function () {
+        res.render("admin/create");
+      })
+      .catch(handleError);
   });
   app.get("/admin/login", function (req, res) {
     res.render("admin/login");
@@ -230,14 +239,15 @@ function getController(app, models) {
           id: id,
           posts: adminPosts,
         });
-      });
+      })
+      .catch(handleError);
   });
 }
 
 /*
 POST
 */
-function postController(app, models) {
+function postController(app) {
   /********
   BLOG POST
   ********/
@@ -246,10 +256,7 @@ function postController(app, models) {
       .then(function (id) {
         res.status(304).redirect("/posts/" + id);
       })
-      .catch(function (error) {
-        console.log("Error: " + error);
-        res.send("Permission denied.");
-      });
+      .catch(handleError);
   });
 
   app.post("/posts/update", function (req, res) {
@@ -259,15 +266,20 @@ function postController(app, models) {
       .then(function () {
         res.status(304).redirect("/posts/" + id);
       })
-      .catch(function (error) {
-        console.log("Error: " + error);
-        res.send("Permission denied.");
-      });
+      .catch(handleError);
   });
 
   /****
   ADMIN
   ****/
+
+  app.post("/admin/create", function (req, res) {
+    createAdmin(req.body, req.signedCookies.token)
+      .then(function () {
+        res.status(304).redirect("/");
+      })
+      .catch(handleError);
+  });
 
   app.post("/admin/login", function (req, res) {
     const { email, password } = req.body;
@@ -368,6 +380,69 @@ function adminLoginByToken(token, callback) {
       callback(error, logged, null);
     });
 }
+
+/****
+ADMIN
+****/
+
+function createAdmin(credentials, token) {
+  const { name, email, password } = credentials;
+
+  function loginByToken() {
+    promise = new Promise(function (resolve, reject) {
+      adminLoginByToken(token, function (err, logged, admin) {
+        if (err) reject(err);
+
+        if (admin.main) resolve();
+        else reject("Permission denied.");
+      });
+    });
+    return promise;
+  }
+
+  /*Admin ID increment*/
+  function incrementAdmin(admin) {
+    promise = new Promise(function (resolve, reject) {
+      Increment.findOneAndUpdate(
+        { id: "increment" },
+        { $inc: { admin: 1 } },
+        {
+          new: true,
+        },
+        function (err, doc) {
+          if (err) reject(err);
+
+          resolve(doc.admin);
+        }
+      );
+    });
+    return promise;
+  }
+
+  /*Admin creation*/
+  function adminCreate(adminInc) {
+    promise = new Promise(function (resolve, reject) {
+      adminNew = new Admin({
+        name: name,
+        email: email,
+        password: encrypt(password, getSecretKey()),
+        id: adminInc,
+      });
+
+      adminNew.save(function (err) {
+        if (err) reject(err);
+        resolve();
+      });
+    });
+    return promise;
+  }
+
+  return loginByToken().then(incrementAdmin).then(adminCreate);
+}
+
+/****
+POST
+****/
 
 /**
  * Function that creates a post, requires token.
@@ -533,8 +608,13 @@ function deletePost(postId, token) {
   return loginByToken().then(checkOwner).then(postDelete);
 }
 
+function handleError(error) {
+  console.log("Error: " + error);
+  res.send("Permission denied.");
+}
+
 module.exports = {
-  setKey,
+  setSettings,
   getController,
   postController,
   adminLoginByToken,
