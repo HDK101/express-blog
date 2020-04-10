@@ -41,57 +41,58 @@ function getController(app) {
   });
 
   function postsPage(res) {
-    Post.find()
-      .exec(function (err, docs) {
-        if (err) return console.log(err);
+    Post.find().exec(function (err, docs) {
+      if (err) return console.log(err);
 
-        function getAdminNames() {
-          promise = new Promise(function (resolve, reject) {
-            Admin.find(function (err, admins) {
-              adminNames = new Array(100);
+      function getAdminNames() {
+        promise = new Promise(function (resolve, reject) {
+          Admin.find(function (error, admins) {
+            if (error) reject(error);
 
-              adminsLength = admins.length;
-              index = 0;
+            adminNames = new Array(100);
 
-              for (index = 0; index < adminsLength; index++) {
-                adminNames.splice(admins[index].id, 0, admins[index].name);
-              }
-
-              resolve(adminNames);
-            });
-          });
-          return promise;
-        }
-
-        function showPosts(admins) {
-          promise = new Promise(function (resolve, reject) {
-            let posts = [];
-
+            adminsLength = admins.length;
             index = 0;
-            docsLength = docs.length;
 
-            for (index = 0; index < docsLength; index++) {
-              let reverseIndex = docsLength - index - 1;
-
-              let post = {
-                title: docs[reverseIndex].title,
-                content: docs[reverseIndex].content,
-                admin: admins[docs[reverseIndex].adminId],
-                id: docs[reverseIndex].id,
-              };
-
-              posts.push(post);
+            for (index = 0; index < adminsLength; index++) {
+              adminNames.splice(admins[index].id, 0, admins[index].name);
             }
 
-            res.render("posts/feed", { posts: posts });
-
-            resolve();
+            resolve(adminNames);
           });
-          return promise;
-        }
+        });
+        return promise;
+      }
 
-        getAdminNames().then(showPosts);
-      });
+      function showPosts(admins) {
+        promise = new Promise(function (resolve, reject) {
+          let posts = [];
+
+          index = 0;
+          docsLength = docs.length;
+
+          for (index = 0; index < docsLength; index++) {
+            let reverseIndex = docsLength - index - 1;
+
+            let post = {
+              title: docs[reverseIndex].title,
+              content: docs[reverseIndex].content,
+              admin: admins[docs[reverseIndex].adminId],
+              id: docs[reverseIndex].id,
+            };
+
+            posts.push(post);
+          }
+
+          res.render("posts/feed", { posts: posts });
+
+          resolve();
+        });
+        return promise;
+      }
+
+      getAdminNames().then(showPosts);
+    });
   }
 
   app.get("/posts/create", function (req, res) {
@@ -138,12 +139,16 @@ function getController(app) {
   });
   app.get("/posts/:id/delete/yes", function (req, res) {
     const id = req.params.id;
+    const token = req.signedCookies.token;
 
-    deletePost(id, req.signedCookies.token)
+    deletePost(id, token)
       .then(function () {
         res.status(304).redirect("/");
       })
-      .catch(handleError);
+      .catch(function (error) {
+        console.log("Error: " + error);
+        res.send("Permission denied.");
+      });
   });
 
   /****
@@ -151,13 +156,11 @@ function getController(app) {
   ****/
 
   app.get("/admin/create", function (req, res) {
+    const token = req.signedCookies.token;
+
     function loginByToken() {
       promise = new Promise(function (resolve, reject) {
-        adminLoginByToken(req.signedCookies.token, function (
-          err,
-          logged,
-          admin
-        ) {
+        loginAdminByToken(token, function (err, logged, admin) {
           if (err) reject(err);
 
           if (admin.main) {
@@ -172,8 +175,103 @@ function getController(app) {
       .then(function () {
         res.render("admin/create");
       })
-      .catch(handleError);
+      .catch(function (error) {
+        console.log("Error: " + error);
+        res.send("Permission denied.");
+      });
   });
+
+  app.get("/admin/update", function (req, res) {
+    const token = req.signedCookies.token;
+
+    function loginByToken() {
+      promise = new Promise(function (resolve, reject) {
+        loginAdminByToken(token, function (err, logged, admin) {
+          if (err) reject(err);
+
+          if (logged) {
+            resolve(admin);
+          } else reject("Permission denied.");
+        });
+      });
+      return promise;
+    }
+
+    loginByToken().then(function (admin) {
+      extractedAdmin = { name: admin.name, email: admin.email };
+
+      res.render("admin/update", { admin: extractedAdmin });
+    });
+  });
+
+  app.get("/admin/delete", function (req, res) {
+    var admins = [];
+
+    const token = req.signedCookies.token;
+
+    function loginByToken() {
+      promise = new Promise(function (resolve, reject) {
+        loginAdminByToken(token, function (err, logged, admin) {
+          if (err) reject(err);
+
+          if (admin.main) {
+            resolve();
+          } else reject("Permission denied.");
+        });
+      });
+      return promise;
+    }
+
+    function findAdmins() {
+      promise = new Promise(function (resolve, reject) {
+        Admin.find({}, function (err, queryAdmins) {
+          if (err) reject(err);
+
+          index = 0;
+          adminsLength = queryAdmins.length;
+
+          for (index = 0; index < adminsLength; index++) {
+            if (queryAdmins[index].id != 0) {
+              admin = {
+                name: queryAdmins[index].name,
+                id: queryAdmins[index].id,
+              };
+              admins.push(admin);
+            }
+          }
+
+          resolve();
+        });
+      });
+      return promise;
+    }
+
+    loginByToken()
+      .then(findAdmins)
+      .then(function () {
+        res.render("admin/delete", { admins: admins });
+      })
+      .catch(function (error) {
+        console.log("Error: " + error);
+        res.send("Permission denied.");
+      });
+  });
+
+  app.get("/admin/delete/:id", function (req, res) {
+    const id = req.params.id;
+
+    const token = req.signedCookies.token;
+
+    deleteAdmin(id, token)
+      .then(function () {
+        res.status(304).redirect("/");
+      })
+      .catch(function (error) {
+        console.log("Error: " + error);
+        res.send("Permission denied.");
+      });
+  });
+
   app.get("/admin/login", function (req, res) {
     res.render("admin/login");
   });
@@ -188,7 +286,7 @@ function getController(app) {
 
     function loginByToken() {
       promise = new Promise(function (resolve, reject) {
-        adminLoginByToken(req.signedCookies.token, function (
+        loginAdminByToken(req.signedCookies.token, function (
           err,
           logged,
           admin
@@ -197,7 +295,7 @@ function getController(app) {
 
           loggedAdmin = admin;
 
-          if (logged) resolve(admin);
+          if (logged) resolve();
           else reject("Permission denied.");
         });
       });
@@ -240,7 +338,10 @@ function getController(app) {
           posts: adminPosts,
         });
       })
-      .catch(handleError);
+      .catch(function (error) {
+        console.log("Error: " + error);
+        res.send("Permission denied.");
+      });
   });
 }
 
@@ -252,21 +353,31 @@ function postController(app) {
   BLOG POST
   ********/
   app.post("/posts/create", function (req, res) {
-    createPost(req.body, req.signedCookies.token)
+    const token = req.signedCookies.token;
+
+    createPost(req.body, token)
       .then(function (id) {
         res.status(304).redirect("/posts/" + id);
       })
-      .catch(handleError);
+      .catch(function (error) {
+        console.log("Error: " + error);
+        res.send("Permission denied.");
+      });
   });
 
   app.post("/posts/update", function (req, res) {
     const { id } = req.body;
 
-    updatePost(req.body, req.signedCookies.token)
+    const token = req.signedCookies.token;
+
+    updatePost(req.body, token)
       .then(function () {
         res.status(304).redirect("/posts/" + id);
       })
-      .catch(handleError);
+      .catch(function (error) {
+        console.log("Error: " + error);
+        res.send("Permission denied.");
+      });
   });
 
   /****
@@ -274,18 +385,24 @@ function postController(app) {
   ****/
 
   app.post("/admin/create", function (req, res) {
-    createAdmin(req.body, req.signedCookies.token)
+    const token = req.signedCookies.token;
+
+    createAdmin(req.body, token)
       .then(function () {
         res.status(304).redirect("/");
       })
-      .catch(handleError);
+      .catch(function (error) {
+        console.log("Error: " + error);
+        res.send("Permission denied.");
+      });
   });
 
   app.post("/admin/login", function (req, res) {
-    const { email, password } = req.body;
+    var { email, password } = req.body;
 
+    /*Generate unique and random string*/
     const token = encrypt(`${Math.random() * 1000}${email}`, getSecretKey());
-    const encryptedPassword = encrypt(password, getSecretKey());
+    password = encrypt(password, getSecretKey());
 
     /*Find Admin and, if credentials is valid, set a token in DB*/
     function findAndUpdateAdmin() {
@@ -320,7 +437,10 @@ function postController(app) {
     function redirectOrError(cookieDone) {
       promise = new Promise(function (resolve, reject) {
         if (cookieDone) res.status(304).redirect("/");
-        else res.send("Invalid credentials!");
+        else {
+          res.send("Invalid credentials!");
+          reject("Invalid credentials!");
+        }
         resolve();
       });
       return promise;
@@ -333,6 +453,31 @@ function postController(app) {
         console.log("Error! " + reason);
       });
   });
+
+  app.post("/admin/update", function (req, res) {
+    const token = req.signedCookies.token;
+    const { name, email, password } = req.body;
+
+    var newCredentials = {};
+
+    if (password == "") {
+      newCredentials = { name: name, email: email };
+    } else
+      newCredentials = {
+        name: name,
+        email: email,
+        password: encrypt(password, getSecretKey()),
+      };
+
+    updateAdmin(newCredentials, token)
+      .then(function () {
+        res.status(304).redirect("/");
+      })
+      .catch(function (error) {
+        console.log("Error: " + error);
+        res.send("Permission denied.");
+      });
+  });
 }
 /**
  * Function that tries to log the user by the token, usually,
@@ -342,7 +487,7 @@ function postController(app) {
  * @param { String } token
  * @param { void } callback
  */
-function adminLoginByToken(token, callback) {
+function loginAdminByToken(token, callback) {
   logged = false;
 
   var admin;
@@ -385,12 +530,38 @@ function adminLoginByToken(token, callback) {
 ADMIN
 ****/
 
+function loginAdminByCredentials(credentials, token) {
+  const { email, password } = credentials;
+
+  promise = new Promise(function (resolve, reject) {
+    Admin.findOneAndUpdate(
+      { email: email, password: encrypt(password, getSecretKey()) },
+      { $set: { token: token } },
+      function (err, doc) {
+        if (err) reject(err);
+
+        /*Check document existence*/
+        if (doc) resolve(true);
+        else resolve(false);
+      }
+    );
+  });
+  return promise;
+}
+
+/**
+ * Function that creates an admin, requires token and be the main admin.
+ * Returns a promise.
+ *
+ * @param { Object } credentials
+ * @param { String } token
+ */
 function createAdmin(credentials, token) {
   const { name, email, password } = credentials;
 
   function loginByToken() {
     promise = new Promise(function (resolve, reject) {
-      adminLoginByToken(token, function (err, logged, admin) {
+      loginAdminByToken(token, function (err, logged, admin) {
         if (err) reject(err);
 
         if (admin.main) resolve();
@@ -440,6 +611,80 @@ function createAdmin(credentials, token) {
   return loginByToken().then(incrementAdmin).then(adminCreate);
 }
 
+/**
+ * Function that updates an admin, requires token and be the main admin.
+ * Returns a promise.
+ *
+ * @param { Object } newCredentials
+ * @param { String } token
+ */
+function updateAdmin(newCredentials, token) {
+  function loginByToken() {
+    promise = new Promise(function (resolve, reject) {
+      loginAdminByToken(token, function (err, logged, admin) {
+        if (err) reject(err);
+        else if (!logged) reject("Permission denied.");
+        else resolve();
+      });
+    });
+    return promise;
+  }
+
+  function adminUpdate() {
+    promise = new Promise(function (resolve, reject) {
+      Admin.updateOne(
+        { token: token },
+        { $set: newCredentials },
+        {
+          new: true,
+        },
+        function (err) {
+          if (err) reject(err);
+          resolve();
+        }
+      );
+    });
+    return promise;
+  }
+
+  return loginByToken().then(adminUpdate);
+}
+
+/**
+ * Function that deletes an admin, requires token and be the main admin.
+ * Returns a promise.
+ *
+ * @param { Number } id
+ * @param { String } token
+ */
+function deleteAdmin(id, token) {
+  function loginByToken() {
+    promise = new Promise(function (resolve, reject) {
+      loginAdminByToken(token, function (err, logged, admin) {
+        if (err) reject(err);
+
+        if (admin.main) {
+          resolve();
+        } else reject("Permission denied.");
+      });
+    });
+    return promise;
+  }
+
+  function adminDelete() {
+    promise = new Promise(function (resolve, reject) {
+      Admin.deleteOne({ id: id }, function (err) {
+        if (err) reject(err);
+
+        resolve();
+      });
+    });
+    return promise;
+  }
+
+  return loginByToken().then(adminDelete);
+}
+
 /****
 POST
 ****/
@@ -456,7 +701,7 @@ function createPost(post, token) {
 
   function loginByToken() {
     promise = new Promise(function (resolve, reject) {
-      adminLoginByToken(token, function (err, logged, admin) {
+      loginAdminByToken(token, function (err, logged, admin) {
         if (err) reject(err);
 
         if (logged) resolve(admin);
@@ -525,7 +770,7 @@ function createPost(post, token) {
 function updatePost(post, token) {
   function loginByToken() {
     promise = new Promise(function (resolve, reject) {
-      adminLoginByToken(token, function (err, logged, admin) {
+      loginAdminByToken(token, function (err, logged, admin) {
         if (err) reject(err);
 
         if (logged) {
@@ -576,7 +821,7 @@ function deletePost(postId, token) {
 
   function loginByToken() {
     promise = new Promise(function (resolve, reject) {
-      adminLoginByToken(token, function (err, logged, admin) {
+      loginAdminByToken(token, function (err, logged, admin) {
         if (err) reject(err);
 
         if (logged) {
@@ -608,17 +853,16 @@ function deletePost(postId, token) {
   return loginByToken().then(checkOwner).then(postDelete);
 }
 
-function handleError(error) {
-  console.log("Error: " + error);
-  res.send("Permission denied.");
-}
-
 module.exports = {
   setSettings,
   getController,
   postController,
-  adminLoginByToken,
+  loginAdminByToken,
+  loginAdminByCredentials,
   createPost,
   updatePost,
   deletePost,
+  createAdmin,
+  updateAdmin,
+  deleteAdmin,
 };
