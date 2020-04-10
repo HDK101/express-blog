@@ -68,6 +68,10 @@ askReset()
   .then(initializeMongoose)
   .then(clearConfiguration)
   .then(clearDB)
+  .finally(function() {
+    console.log("Everything done!");
+    process.exit();
+  })
   .catch(function(error) {
     if (error != "Reset cancelled.") console.log("Error: " + error);
     else console.log(error);
