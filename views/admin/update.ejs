@@ -1,0 +1,11 @@
+<%- include("../main/htmlStart") %>
+<form method="POST" action="/admin/update">
+    <label>Name</label>
+    <input type="text" name="name" value="<%=admin.name%>" />
+    <label>Email</label>
+    <input type="email" name="email" value="<%=admin.email%>" />
+    <label>Password</label>
+    <input type="password" name="password"/>
+    <input type="submit">
+</form>
+<%- include("../main/htmlEnd") %>

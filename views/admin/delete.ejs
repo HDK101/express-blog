@@ -1,0 +1,10 @@
+<%- include("../main/htmlStart") %>
+<% index = 0 %>
+<% adminsLength = admins.length %>
+<% if(adminsLength > 0) { %>
+<% for(index = 0; index < adminsLength; index++) { %>
+<% admin = admins[index] %>
+<a href="/admin/delete/<%=admin.id%>"><%=admin.name%></a>
+<%}%>
+<%}%>
+<%- include("../main/htmlEnd") %>
