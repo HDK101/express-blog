@@ -8,9 +8,9 @@ connect(config.blogName);
 const models = require("./models/models");
 
 /*Controllers*/
-const { setKey, getController, postController } = require("./controller/controllers");
+const { setSettings, getController, postController } = require("./controller/controllers");
 
-setKey(config.secretKey);
+setSettings({ secretKey: config.secretKey });
 getController(app, models);
 postController(app, models);
 
