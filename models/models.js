@@ -1,14 +1,39 @@
 const { Schema, model } = require("mongoose");
+const { encrypt } = require("../components/crypto");
+const { config } = require("../Server/server");
+
+const secretKey = config.secretKey;
 
 /*Admin model*/
 const admin = new Schema({
-  name: String,
-  password: String,
-  email: String,
+  name: {
+    type: String,
+    minlength: [4, "Name too short."],
+  },
+  password: {
+    type: String,
+    minlength: [8, "Password too short."],
+    maxlength: [20, "Password too long."],
+  },
+  email: {
+    type: String,
+    validate: {
+      validator: function (v) {
+        const at = RegExp("@");
+        return at.test(v);
+      },
+      message: "Email is not valid.",
+    },
+  },
   id: Number,
-  token : String,
+  token: String,
   /*A boolean to check if this admin is the main one*/
-  main: { type: Boolean, default: false }
+  main: { type: Boolean, default: false },
+});
+
+admin.pre("save", function (next) {
+  if (this.password) this.password = encrypt(this.password, secretKey);
+  next();
 });
 
 const Admin = model("Administrator", admin);
@@ -18,17 +43,17 @@ const user = new Schema({
   name: String,
   password: String,
   email: String,
-  id: Number
+  id: Number,
 });
 
 const User = model("User", user);
 
 /*Post*/
 const post = new Schema({
-  title: String,
-  content: String,
-  id: Number,
-  adminId: Number
+  title: { type: String, required: [true, "Empty title."] },
+  content: { type: String, required: [true, "Empty content."] },
+  id: { type: Number, required: true },
+  adminId: { type: Number, required: true },
 });
 
 const Post = model("Post", post);
@@ -38,7 +63,7 @@ const comment = new Schema({
   content: String,
   id: Number,
   postId: Number,
-  userId: Number
+  userId: Number,
 });
 
 const Comment = model("Comment", comment);
@@ -49,10 +74,9 @@ const increment = new Schema({
   admin: { type: Number, default: 0 },
   user: { type: Number, default: 0 },
   comment: { type: Number, default: 0 },
-  id: { type: String, default: "increment" }
+  id: { type: String, default: "increment" },
 });
 
 const Increment = model("Increment", increment);
 
 module.exports = { Admin, User, Post, Comment, Increment };
-
