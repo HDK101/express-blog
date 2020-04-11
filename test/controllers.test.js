@@ -22,7 +22,7 @@ describe("Methods for Controllers file", () => {
   testMainAdmin = new Admin({
     email: "test@email.com",
     name: "Name",
-    password: "Password",
+    password: "Password123456",
     token: token,
     main: true,
     id: 0,
@@ -30,19 +30,18 @@ describe("Methods for Controllers file", () => {
   testOtherAdmin = {
     email: "other@email.com",
     name: "Name1",
-    password: "Password1",
+    password: "Password654321",
     id: 1,
   };
   testOtherUpdatedAdmin = {
     email: "another@email.com",
     name: "Name2",
-    password: "Password2",
+    password: "Password232323",
     id: 1,
   };
 
   before(function (done) {
     connect(config.blogName, true);
-    setSettings({ secretKey: config.secretKey });
 
     function adminCount() {
       promise = new Promise(function (resolve, reject) {
