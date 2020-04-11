@@ -8,9 +8,8 @@ connect(config.blogName);
 const models = require("./models/models");
 
 /*Controllers*/
-const { setSettings, getController, postController } = require("./controller/controllers");
+const { getController, postController } = require("./controller/controllers");
 
-setSettings({ secretKey: config.secretKey });
 getController(app, models);
 postController(app, models);
 
