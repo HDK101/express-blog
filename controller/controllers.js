@@ -1,29 +1,8 @@
 var { encrypt } = require("../components/crypto");
 const { Increment, Admin, Post } = require("../models/models");
+const { config } = require("../Server/server");
 
-settings = {};
-
-const getSecretKey = () => {
-  if (!settings.secretKey) throw "Special key not set!";
-  return settings.secretKey;
-};
-
-/*
-Controller settings
-*/
-
-/**
- *
- * @param { Object } config - Configuration object
- * Set settings for controller
- *
- * Settings:
- * - secretKey : String
- *
- */
-function setSettings(config) {
-  settings = Object.assign(settings, config);
-}
+const secretKey = config.secretKey;
 
 /*
 GET
@@ -360,8 +339,13 @@ function postController(app) {
         res.status(304).redirect("/posts/" + id);
       })
       .catch(function (error) {
-        console.log("Error: " + error);
-        res.send("Permission denied.");
+        if (error.type == "ValidationError") {
+          console.log("Error: " + error.errors);
+          res.send(`Error: ${error.errors}`);
+        } else {
+          console.log("Error: " + error);
+          res.send("Permission denied.");
+        }
       });
   });
 
@@ -375,8 +359,13 @@ function postController(app) {
         res.status(304).redirect("/posts/" + id);
       })
       .catch(function (error) {
-        console.log("Error: " + error);
-        res.send("Permission denied.");
+        if (error.type == "ValidationError") {
+          console.log("Error: " + error.errors);
+          res.send(`Error: ${error.errors}`);
+        } else {
+          console.log("Error: " + error);
+          res.send("Permission denied.");
+        }
       });
   });
 
@@ -392,8 +381,13 @@ function postController(app) {
         res.status(304).redirect("/");
       })
       .catch(function (error) {
-        console.log("Error: " + error);
-        res.send("Permission denied.");
+        if (error.type == "ValidationError") {
+          console.log("Error: " + error.errors);
+          res.send(`Error: ${error.errors}`);
+        } else {
+          console.log("Error: " + error);
+          res.send("Permission denied.");
+        }
       });
   });
 
@@ -401,14 +395,14 @@ function postController(app) {
     var { email, password } = req.body;
 
     /*Generate unique and random string*/
-    const token = encrypt(`${Math.random() * 1000}${email}`, getSecretKey());
-    password = encrypt(password, getSecretKey());
+    const token = encrypt(`${Math.random() * 1000}${email}`, secretKey);
+    password = encrypt(password, secretKey);
 
     /*Find Admin and, if credentials is valid, set a token in DB*/
     function findAndUpdateAdmin() {
       promise = new Promise(function (resolve, reject) {
         Admin.findOneAndUpdate(
-          { email: email, password: encryptedPassword },
+          { email: email, password: password },
           { $set: { token: token } },
           function (err, doc) {
             if (err) reject(err);
@@ -438,8 +432,9 @@ function postController(app) {
       promise = new Promise(function (resolve, reject) {
         if (cookieDone) res.status(304).redirect("/");
         else {
-          res.send("Invalid credentials!");
-          reject("Invalid credentials!");
+          const errorMessage = "Invalid credentials!";
+          res.send(errorMessage);
+          reject(errorMessage);
         }
         resolve();
       });
@@ -466,7 +461,7 @@ function postController(app) {
       newCredentials = {
         name: name,
         email: email,
-        password: encrypt(password, getSecretKey()),
+        password: password,
       };
 
     updateAdmin(newCredentials, token)
@@ -474,8 +469,13 @@ function postController(app) {
         res.status(304).redirect("/");
       })
       .catch(function (error) {
-        console.log("Error: " + error);
-        res.send("Permission denied.");
+        if (error.type == "ValidationError") {
+          console.log("Error: " + error.errors);
+          res.send(`Error: ${error.errors}`);
+        } else {
+          console.log("Error: " + error);
+          res.send("Permission denied.");
+        }
       });
   });
 }
@@ -535,7 +535,7 @@ function loginAdminByCredentials(credentials, token) {
 
   promise = new Promise(function (resolve, reject) {
     Admin.findOneAndUpdate(
-      { email: email, password: encrypt(password, getSecretKey()) },
+      { email: email, password: encrypt(password, secretKey) },
       { $set: { token: token } },
       function (err, doc) {
         if (err) reject(err);
@@ -596,12 +596,30 @@ function createAdmin(credentials, token) {
       adminNew = new Admin({
         name: name,
         email: email,
-        password: encrypt(password, getSecretKey()),
+        password: password,
         id: adminInc,
       });
 
       adminNew.save(function (err) {
-        if (err) reject(err);
+        if (err) {
+          if (err.name == "ValidationError") {
+            errorList = [];
+
+            const nameMessage =
+              err.errors["name"] != null ? err.errors["name"].message : "";
+            const emailMessage =
+              err.errors["email"] != null ? err.errors["email"].message : "";
+            const passwordMessage =
+              err.errors["password"] != null
+                ? err.errors["password"].message
+                : "";
+
+            errorList.push(nameMessage, emailMessage, passwordMessage);
+
+            reject({ type: "ValidationError", errors: errorList });
+          } else reject(err);
+        }
+
         resolve();
       });
     });
@@ -636,10 +654,29 @@ function updateAdmin(newCredentials, token) {
         { token: token },
         { $set: newCredentials },
         {
+          runValidators: true,
           new: true,
         },
         function (err) {
-          if (err) reject(err);
+          if (err) {
+            if (err.name == "ValidationError") {
+              errorList = [];
+
+              const nameMessage =
+                err.errors["name"] != null ? err.errors["name"].message : "";
+              const emailMessage =
+                err.errors["email"] != null ? err.errors["email"].message : "";
+              const passwordMessage =
+                err.errors["password"] != null
+                  ? err.errors["password"].message
+                  : "";
+
+              errorList.push(nameMessage, emailMessage, passwordMessage);
+
+              reject({ type: "ValidationError", errors: errorList });
+            } else reject(err);
+          }
+
           resolve();
         }
       );
@@ -750,7 +787,25 @@ function createPost(post, token) {
       });
 
       postNew.save(function (err) {
-        if (err) reject(err);
+        if (err) {
+          if (err.name == "ValidationError") {
+            errorList = [];
+
+            console.table(err.name);
+
+            const titleMessage =
+              err.errors["title"] != null ? err.errors["title"].message : "";
+            const contentMessage =
+              err.errors["content"] != null
+                ? err.errors["content"].message
+                : "";
+
+            errorList.push(titleMessage, contentMessage);
+
+            reject({ type: "ValidationError", errors: errorList });
+          } else reject(err);
+        }
+
         resolve(postId);
       });
     });
@@ -794,16 +849,37 @@ function updatePost(post, token) {
   }
 
   function postUpdate() {
-    return Post.findOneAndUpdate(
-      { id: post.id },
-      { $set: { title: post.title, content: post.content } },
-      {
-        new: true,
-      },
-      function (err) {
-        if (err) return console.log(err);
-      }
-    );
+    promise = new Promise(function (resolve, reject) {
+      Post.findOneAndUpdate(
+        { id: post.id },
+        { $set: { title: post.title, content: post.content } },
+        {
+          new: true,
+          runValidators: true,
+        },
+        function (err) {
+          if (err) {
+            if (err.name == "ValidationError") {
+              errorList = [];
+
+              const titleMessage =
+                err.errors["title"] != null ? err.errors["title"].message : "";
+              const contentMessage =
+                err.errors["content"] != null
+                  ? err.errors["content"].message
+                  : "";
+
+              errorList.push(titleMessage, contentMessage);
+
+              reject({ type: "ValidationError", errors: errorList });
+            } else reject(err);
+          }
+
+          resolve();
+        }
+      );
+    });
+    return promise;
   }
 
   return loginByToken().then(checkOwner).then(postUpdate);
@@ -854,7 +930,6 @@ function deletePost(postId, token) {
 }
 
 module.exports = {
-  setSettings,
   getController,
   postController,
   loginAdminByToken,
