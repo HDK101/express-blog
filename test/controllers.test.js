@@ -1,13 +1,7 @@
 const {
-  loginAdminByToken,
-  loginAdminByCredentials,
-  createPost,
-  updatePost,
-  deletePost,
-  createAdmin,
-  updateAdmin,
-  deleteAdmin,
-  setSettings,
+  AdminMethods,
+  PostMethods,
+  LoginAnd,
 } = require("../controller/controllers");
 const { Admin, Post, Increment } = require("../models/models");
 const { closeConnection, connect } = require("../Server/server");
@@ -15,6 +9,15 @@ const assert = require("assert");
 const { getConfig } = require("../Server/configParser");
 
 const config = getConfig();
+
+const {
+  createAdmin,
+  updateAdmin,
+  deleteAdmin,
+  loginAdminByToken,
+  loginAdminByCredentials,
+} = AdminMethods;
+const { createPost, updatePost, deletePost } = PostMethods;
 
 describe("Methods for Controllers file", () => {
   const token = "123testtoken123";
@@ -107,7 +110,6 @@ describe("Methods for Controllers file", () => {
       });
   });
   it("create admin", (done) => {
-
     function testCreateAdmin() {
       return createAdmin(testOtherAdmin, token);
     }
