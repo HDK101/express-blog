@@ -33,8 +33,7 @@
     "ejs": "^3.0.1",
     "express": "^4.17.1",
     "minimist": "^1.2.5",
-    "mongoose": "^5.8.9",
-    "pm2": "^4.2.3"
+    "mongoose": "^5.8.9"
   },
   "devDependencies": {
     "mocha": "^7.0.1",
