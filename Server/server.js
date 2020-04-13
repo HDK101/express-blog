@@ -1,5 +1,4 @@
 const { getConfig } = require("./configParser");
-const mongoose = require("mongoose");
 const express = require("express");
 const bodyparser = require("body-parser");
 const cookieparser = require("cookie-parser");
@@ -56,4 +55,4 @@ function listen() {
   });
 }
 
-module.exports = { connect, closeConnection, listen, app, mongoose, config };
+module.exports = { connect, closeConnection, listen, app, config };
