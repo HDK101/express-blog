@@ -6,6 +6,11 @@
   "scripts": {
     "test": "mocha",
     "dev": "nodemon .",
+    "production": "pm2 start index.js --name Blog",
+    "restart": "pm2 restart Blog",
+    "stop": "pm2 stop Blog",
+    "logs": "pm2 logs",
+    "list": "pm2 list",
     "createBlog": "node createBlog.js",
     "resetBlog": "node resetBlog.js"
   },
