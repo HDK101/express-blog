@@ -21,3 +21,15 @@ https://www.mongodb.com/download-center/community
 2. Run "npm install"
 3. Run "npm run createBlog" and configure your blog
 4. Install Pm2 globally, "npm install -g pm2"
+
+## Running
+- "npm run dev" starts development build(nodemon)
+- "npm run production" starts production build(pm2)
+
+## Misc
+### Scripts
+- "npm run resetBlog" clears DBs and configuration file
+- "npm run restart" restarts the process in pm2.
+- "npm run stop" stop blog process in pm2.
+- "npm run logs" show logs on all process in pm2
+- "npm run test" executes Mocha to test.
