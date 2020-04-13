@@ -2,7 +2,11 @@ const { Schema, model } = require("mongoose");
 const { encrypt } = require("../components/crypto");
 const { config } = require("../Server/server");
 
-const secretKey = config.secretKey;
+let secretKey = config.secretKey;
+
+function setSecretKey(key) {
+  secretKey = key;
+}
 
 /*Admin model*/
 const admin = new Schema({
@@ -79,4 +83,4 @@ const increment = new Schema({
 
 const Increment = model("Increment", increment);
 
-module.exports = { Admin, User, Post, Comment, Increment };
+module.exports = { Admin, User, Post, Comment, Increment, setSecretKey };
