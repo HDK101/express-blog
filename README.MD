@@ -17,4 +17,4 @@ https://www.mongodb.com/download-center/community
 1. Clone repository
 2. Run "npm install"
 3. Run "npm run createBlog" and configure your blog
-4. Run "npm run dev"
+4. Install Pm2 globally, "npm install -g pm2"
