@@ -6,6 +6,12 @@
 https://www.mongodb.com/download-center/community
 
 ## Technologies
+- EJS(3.0.1)
+- Express(4.17.1)
+- Mongoose(5.8.9)
+- Pm2(4.2.3)(Production)
+- Nodemon(2.0.2)(Dev)
+- Mocha(7.0.1)(Test)
 
 ## Installation
 1. Clone repository
