@@ -1,8 +1,7 @@
-const { Admin, Increment } = require("./models/models");
+const { Admin, Increment, setSecretKey } = require("./models/models");
 const { setConfig } = require("./Server/configParser");
 const readline = require("readline");
 const mongoose = require("mongoose");
-const { encrypt } = require("./components/crypto");
 
 /*Models */
 var mainAdminDb;
@@ -12,22 +11,23 @@ incrementDb = new Increment();
 var adminName, adminEmail, adminPassword;
 
 /*Blog settings*/
-var blogName, blogPort; 
+var blogName, blogPort;
 
 /*Blog key*/
 var blogKey;
 
 const reader = readline.createInterface({
   input: process.stdin,
-  output: process.stdout
+  output: process.stdout,
 });
 
 /*****************
 Questions promises
 *****************/
 function askAdminName() {
-  promise = new Promise(function(resolve) {
-    reader.question("What's the main admin name?\n", function(answer) {
+  promise = new Promise(function (resolve, reject) {
+    reader.question("What's the main admin name?\n", function (answer) {
+      if(answer == "") reject("Invalid name.");
       console.log("Okay then.");
       adminName = answer;
       resolve();
@@ -37,8 +37,10 @@ function askAdminName() {
 }
 
 function askAdminEmail() {
-  promise = new Promise(function(resolve) {
-    reader.question("What's the main admin email?\n", function(answer) {
+  promise = new Promise(function (resolve, reject) {
+    reader.question("What's the main admin email?\n", function (answer) {
+      const at = /@/;
+      if(!at.test(answer)) reject("Invalid email.");
       console.log("Okay then.");
       adminEmail = answer;
       resolve();
@@ -48,8 +50,9 @@ function askAdminEmail() {
 }
 
 function askAdminPassword() {
-  promise = new Promise(function(resolve) {
-    reader.question("What's the main admin password?\n", function(answer) {
+  promise = new Promise(function (resolve, reject) {
+    reader.question("What's the main admin password?\n", function (answer) {
+      if(answer == "") reject("Invalid password.");
       console.log("Okay then.");
       adminPassword = answer;
       resolve();
@@ -59,8 +62,9 @@ function askAdminPassword() {
 }
 
 function askBlogName() {
-  promise = new Promise(function(resolve) {
-    reader.question("Blog name?(or codename?)\n", function(answer) {
+  promise = new Promise(function (resolve, reject) {
+    reader.question("Blog name?(or codename?)\n", function (answer) {
+      if(answer == "") reject("Invalid blog name.");
       console.log("Blog name set to " + answer);
       blogName = answer;
       resolve();
@@ -70,8 +74,9 @@ function askBlogName() {
 }
 
 function askBlogPort() {
-  promise = new Promise(function(resolve) {
-    reader.question("Which port should be used?\n", function(answer) {
+  promise = new Promise(function (resolve, reject) {
+    reader.question("Which port should be used?\n", function (answer) {
+      if(answer == "" || isNaN(answer)) reject("Invalid port.");
       console.log("Port set to " + answer);
       blogPort = answer;
       resolve();
@@ -84,7 +89,7 @@ function askBlogPort() {
 Configuration promise
 ********************/
 function setConfigJSON() {
-  promise = new Promise(function(resolve, reject) {
+  promise = new Promise(function (resolve) {
     function generateKey() {
       let key = "";
       while (key.length < 32) {
@@ -92,12 +97,13 @@ function setConfigJSON() {
       }
       return key;
     }
-    blogKey = generateKey();
+    const key = generateKey();
+    blogKey = key;
     config = {
       blogName: blogName,
       port: blogPort,
-      secretKey: blogKey,
-      initialized: true
+      secretKey: key,
+      initialized: true,
     };
     setConfig(config);
     resolve();
@@ -109,9 +115,8 @@ function setConfigJSON() {
 Database promises
 ****************/
 
-
 function initializeMongoose() {
-  promise = new Promise(function(resolve, reject) {
+  promise = new Promise(function (resolve, reject) {
     mongoose.set("useNewUrlParser", true);
     mongoose.set("useFindAndModify", false);
     mongoose.set("useCreateIndex", true);
@@ -119,18 +124,18 @@ function initializeMongoose() {
 
     mongoose.connect(`mongodb://localhost/${blogName}_blog`);
     const db = mongoose.connection;
-    db.on("error", function() {
+    db.on("error", function () {
       reject("Connection failure!");
     });
-    db.on("open", function() {
+    db.on("open", function () {
       resolve();
     });
   });
   return promise;
 }
 function checkAdminExistence() {
-  promise = new Promise(function(resolve, reject) {
-    Admin.countDocuments({ id: 0, main: true }, function(err, count) {
+  promise = new Promise(function (resolve, reject) {
+    Admin.countDocuments({ id: 0, main: true }, function (err, count) {
       if (err) reject(err);
       resolve(count);
     });
@@ -139,17 +144,19 @@ function checkAdminExistence() {
 }
 
 function createAdmin(count) {
-  promise = new Promise(function(resolve, reject) {
+  promise = new Promise(function (resolve, reject) {
+    setSecretKey(blogKey);
+
     mainAdminDb = new Admin({
       name: adminName,
       email: adminEmail,
-      password: encrypt(adminPassword, blogKey),
+      password: adminPassword,
       main: true,
-      id: 0
+      id: 0,
     });
     if (count == 0) {
       console.log("No main admin was found, creating...");
-      mainAdminDb.save(function(err) {
+      mainAdminDb.save(function (err) {
         if (err) reject(err);
         console.log("Main admin created!");
         resolve();
@@ -163,8 +170,8 @@ function createAdmin(count) {
 }
 
 function checkIncrementExistence() {
-  promise = new Promise(function(resolve, reject) {
-    Increment.countDocuments({}, function(err, count) {
+  promise = new Promise(function (resolve, reject) {
+    Increment.countDocuments({}, function (err, count) {
       if (err) reject(err);
       resolve(count);
     });
@@ -173,10 +180,10 @@ function checkIncrementExistence() {
 }
 
 function createIncrement(count) {
-  promise = new Promise(function(resolve, reject) {
+  promise = new Promise(function (resolve, reject) {
     if (count == 0) {
       console.log("No increment was found, creating...");
-      incrementDb.save(function(err) {
+      incrementDb.save(function (err) {
         if (err) reject(err);
         console.log("Increment created!");
         resolve();
@@ -201,10 +208,11 @@ askAdminName()
   .then(createAdmin)
   .then(checkIncrementExistence)
   .then(createIncrement)
-  .finally(function() {
+  .then(function () {
     console.log("Everything done!");
     process.exit();
   })
-  .catch(function(error) {
-    console.log("Error:" + error);
+  .catch(function (error) {
+    console.log("Error: " + error);
+    process.exit();
   });
