@@ -329,14 +329,13 @@ function postController(app) {
   });
 
   app.post("/admin/login", function (req, res) {
-    let credentials = req.body;
-    const { email, password } = credentials;
+    const credentials = req.body;
+    const { email } = credentials;
 
     const { loginAdminByCredentials } = AdminMethods;
 
     /*Generate unique and random string*/
     const token = encrypt(`${Math.random() * 1000}${email}`, secretKey);
-    credentials.password = encrypt(password, secretKey);
 
     function setBrowserToken(adminFound) {
       promise = new Promise(function (resolve, reject) {
