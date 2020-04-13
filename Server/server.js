@@ -1,4 +1,5 @@
 const { getConfig } = require("./configParser");
+const mongoose = require("mongoose");
 const express = require("express");
 const bodyparser = require("body-parser");
 const cookieparser = require("cookie-parser");
