@@ -29,14 +29,14 @@
   "homepage": "https://github.com/HDK101/express-blog#readme",
   "dependencies": {
     "body-parser": "^1.19.0",
-    "cookie-parser": "^1.4.4",
-    "ejs": "^3.0.1",
+    "cookie-parser": "^1.4.5",
+    "ejs": "^3.1.5",
     "express": "^4.17.1",
     "minimist": "^1.2.5",
-    "mongoose": "^5.8.9"
+    "mongoose": "^5.10.4"
   },
   "devDependencies": {
-    "mocha": "^7.0.1",
-    "nodemon": "^2.0.2"
+    "mocha": "^8.1.3",
+    "nodemon": "^2.0.4"
   }
 }
